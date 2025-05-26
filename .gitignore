@@ -1,2 +1,9 @@
 alembic
+.venv
+__pycache__
+scopes.py
+crypt_key.py
 .env
+/tests
+pytest.ini
+config.yml
