@@ -17,7 +17,7 @@ export default function HomePage() {
 
   const checkAuthentication = async () => {
     try {
-      const response = await fetch("https://agoserver.a1devhub.tech/home", {
+      const response = await fetch("https://agoserver.a1devhub.tech/me", {
         method: "GET",
         credentials: "include", // Incluir cookies
         headers: {

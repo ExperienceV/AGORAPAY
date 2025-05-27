@@ -12,7 +12,4 @@ async def auth_page() -> str:
 
 @router.get("/home")
 async def home(user: dict = Depends(auth_dependency)):
-    return JSONResponse(
-        status_code=200,
-        content={"authenticated": True, "user": user}
-    )
+    return {"message":"hello react!"}

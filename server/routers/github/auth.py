@@ -72,7 +72,6 @@ async def github_callback(request: Request):
         "httponly": settings.HTTPONLY,
         "secure": settings.SECURE,
         "samesite": settings.SAMESITE,
-        "domain": "a1devhub.tech",  # Dominio principal
         "path": "/"  # Accesible en todas las rutas
     }
 

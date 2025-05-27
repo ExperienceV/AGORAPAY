@@ -6,11 +6,15 @@ class Settings(BaseSettings):
     SAMESITE: str = "none"  # none para permitir cross-site
     HTTPONLY: bool = True   # True para seguridad
     SECURE: bool = True     # True para conexiones HTTPS
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "https://agora-devs.vercel.app"
     
     # Configuración de CORS
     CORS_ALLOW_CREDENTIALS: bool = True
-    CORS_ALLOW_ORIGINS: list = ["https://agoserver.a1devhub.tech", "http://localhost:3000"]
+    CORS_ALLOW_ORIGINS: list = [
+                                "https://agora-devs.vercel.app",
+                                "http://localhost:3000",
+                                "http://agoserver.a1devhub.tech"
+                            ]
     CORS_ALLOW_METHODS: list = ["*"]
     CORS_ALLOW_HEADERS: list = ["*"]
 
