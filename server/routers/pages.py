@@ -20,20 +20,8 @@ ic("/home: Ruta para la página principal")
 @router.get("/home", response_class=HTMLResponse)
 async def home(user: dict = Depends(auth_dependency)):
     try:
-        return """
-    <html>
-        <head><title>Home</title></head>
-        <body style='background:#121212; color:white; text-align:center;'>
-            <h1>¡Bienvenido a la página principal!</h1>
-            <p>Ya puedes cerrar esta ventana.</p>
-            <script>
-                setTimeout(() => {
-                    window.close();
-                }, 1500);
-            </script>
-        </body>
-    </html>
-    """
+        path = Path("static/index.html")
+        return path.read_text(encoding="utf-8")
     except HTTPException as http_exc:
         return JSONResponse(
             status_code=http_exc.status_code,

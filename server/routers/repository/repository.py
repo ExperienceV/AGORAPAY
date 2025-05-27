@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from utils.security.modules import auth_dependency
 from fastapi.responses import JSONResponse
+from models import UploadModel, TransferModel
 from database.queries.user import get_token_by_user
 from database.queries.repository import set_repository, get_set_repositories, save_transfer_repo
 from services.github_service import list_github_repositories, download_github_repo, upload_repo_to_github
@@ -62,15 +63,15 @@ async def github_repositories(user: dict = Depends(auth_dependency)) -> list:
 ic("/upload_repository: Ruta para subir un repositorio")
 @router.post("/upload_repository")
 async def upload_repository(
-    name_repository: str,
-    url_repository: str,
+    up_model: UploadModel,
     user: dict = Depends(auth_dependency)
 ) -> dict:
     """
     Endpoint to upload a repository.
     """
     ic("Inicializando subida de repositorio")
-    ic("Subiendo repositorio:", name_repository, "con URL:", url_repository)
+    ic("Subiendo repositorio:", up_model.name_repository, "con URL:", up_model.url_repository)
+    print("Subiendo repositorio:")
     try:
         # get name from user
         ic("Extrayendo nombre de usuario del objeto user")
@@ -84,8 +85,8 @@ async def upload_repository(
         ic("Subiendo metadatos del repositorio a la base de datos")
         response = set_repository(
             user_id=user_id,
-            name_repository=name_repository,
-            url_repository=url_repository)
+            name_repository=up_model.name_repository,
+            url_repository=up_model.url_repository)
 
         ic("Respuesta de la base de datos:", response)
         if not response:
@@ -144,9 +145,7 @@ async def get_uploaded_repositories(
 ic("/transfer_repository: Ruta para transferir un repositorio") 
 @router.post("/transfer_repository")
 async def transfer_repository(
-    seller_id: int,
-    repo_url: str,
-    repo_name: str,
+    tm: TransferModel,
     user: dict = Depends(auth_dependency)
 ) -> dict:
     """
@@ -156,6 +155,10 @@ async def transfer_repository(
     ic("Inicializando transferencia de repositorio")
     try:
         ic("Recibiendo solicitud de transferencia de repositorio")
+
+        repo_url = tm.repo_url
+        seller_id = tm.seller_id
+        repo_name = tm.repo_name
 
         # Extract owner and repo name from the provided URL
         ic("Analizando URL del repositorio:", repo_url)

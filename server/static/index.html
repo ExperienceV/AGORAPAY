@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Plataforma de Repositorios</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+
+  <div class="max-w-4xl mx-auto bg-white shadow-md p-6 rounded-lg">
+    <h1 class="text-3xl font-bold mb-4">Panel de Usuario</h1>
+
+    <!-- Usuario actual -->
+    <div class="mb-6">
+      <h2 class="text-xl font-semibold">Información del Usuario</h2>
+      <p><strong>Nombre:</strong> <span id="username" class="text-blue-600"></span></p>
+      <p><strong>Email:</strong> <span id="email" class="text-blue-600"></span></p>
+    </div>
+
+    <!-- Barra de búsqueda -->
+    <div class="mb-6">
+      <h2 class="text-xl font-semibold mb-2">Buscar Usuario</h2>
+      <div class="flex gap-2">
+        <input id="search" type="text" placeholder="Username o Email" class="flex-1 border rounded px-3 py-2"/>
+        <button onclick="buscarUsuario()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Buscar</button>
+      </div>
+      <div id="resultadoBusqueda" class="mt-4"></div>
+    </div>
+
+    <!-- Repositorios -->
+    <div class="mb-6">
+      <h2 class="text-xl font-semibold">Mis Repositorios</h2>
+      <ul id="repositorios" class="mt-2 space-y-2"></ul>
+    </div>
+
+    <!-- Transferencias -->
+    <div class="mb-6">
+      <h2 class="text-xl font-semibold">Repositorios Transferidos</h2>
+      <ul id="transferencias" class="mt-2 space-y-2"></ul>
+    </div>
+
+    <!-- Subir repositorio -->
+    <div class="mb-6">
+      <button onclick="cargarReposGitHub()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Subir Repositorio</button>
+      <div id="reposGitHub" class="mt-4 space-y-2"></div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchWithCookies(url, options = {}) {
+      return fetch(url, { ...options, credentials: 'include' });
+    }
+
+    async function cargarUsuarioActual() {
+      const res = await fetchWithCookies('/get_user_info');
+      const data = await res.json();
+      document.getElementById('username').textContent = data.user.profile.username;
+      document.getElementById('email').textContent = data.user.profile.email;
+      renderRepos(data.user.repositories, 'repositorios');
+      renderRepos(data.user.transfer_repository, 'transferencias');
+    }
+
+    function renderRepos(repos, containerId, permitirObtener = false, sellerId = null) {
+      const contenedor = document.getElementById(containerId);
+      contenedor.innerHTML = '';
+
+      if (!repos || repos.length === 0) {
+        contenedor.innerHTML = '<p class="text-gray-500">Sin repositorios.</p>';
+        return;
+      }
+
+      repos.forEach(repo => {
+        const item = document.createElement('li');
+        item.className = 'bg-gray-100 p-3 rounded shadow-sm flex justify-between items-center';
+        item.innerHTML = `
+          <div>
+            <p class="font-medium">${repo.name}</p>
+            <a href="${repo.url}" class="text-blue-600 underline" target="_blank">${repo.url}</a>
+          </div>
+        `;
+        if (permitirObtener) {
+          const btn = document.createElement('button');
+          btn.textContent = 'Obtener';
+          btn.className = 'bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700';
+          btn.onclick = () => obtenerRepositorio(repo, sellerId);
+          item.appendChild(btn);
+        }
+        contenedor.appendChild(item);
+      });
+    }
+
+    async function buscarUsuario() {
+      const valor = document.getElementById('search').value.trim();
+      if (!valor) return;
+
+      const esEmail = valor.includes('@');
+      const query = esEmail ? `email=${valor}` : `username=${valor}`;
+      const res = await fetchWithCookies(`/get_user_info?${query}`);
+      const data = await res.json();
+
+      const contenedor = document.getElementById('resultadoBusqueda');
+      contenedor.innerHTML = `
+        <h3 class="text-lg font-semibold">Usuario Encontrado</h3>
+        <p><strong>Nombre:</strong> ${data.user.profile.username}</p>
+        <p><strong>Email:</strong> ${data.user.profile.email}</p>
+        <h4 class="font-semibold mt-2">Repositorios:</h4>
+        <ul id="reposBuscados" class="space-y-2 mt-1"></ul>
+      `;
+
+      renderRepos(data.user.repositories, 'reposBuscados', true, data.user.profile.id);
+    }
+
+    async function cargarReposGitHub() {
+      const res = await fetchWithCookies('/get_github_repositories');
+      const repos = await res.json();
+
+      const contenedor = document.getElementById('reposGitHub');
+      contenedor.innerHTML = '';
+
+      repos.forEach(repo => {
+        const btn = document.createElement('button');
+        btn.textContent = `${repo.nombre} (${repo.visibilidad})`;
+        btn.className = 'block w-full text-left px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded';
+        btn.onclick = () => subirRepositorio(repo.nombre, repo.url);
+        contenedor.appendChild(btn);
+      });
+    }
+
+    async function subirRepositorio(nombre, url) {
+      await fetchWithCookies('/upload_repository', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include', // Incluye cookies y otras credenciales
+        body: JSON.stringify({
+          name_repository: nombre,
+          url_repository: url
+        })
+      });
+      alert('Repositorio subido.');
+      cargarUsuarioActual();
+    }
+
+    async function obtenerRepositorio(repo, sellerId) {
+      await fetchWithCookies('/transfer_repository', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          seller_id: sellerId,
+          repo_url: repo.url,
+          repo_name: repo.name
+        })
+      });
+      alert('Repositorio obtenido.');
+      cargarUsuarioActual();
+    }
+
+    // Inicializar
+    cargarUsuarioActual();
+  </script>
+</body>
+</html>
