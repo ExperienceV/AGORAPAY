@@ -3,47 +3,51 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Plataforma de Repositorios</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>AgoraDevs - Plataforma de Repositorios</title>
+  <link rel="stylesheet" href="static/styles.css">
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
-
-  <div class="max-w-4xl mx-auto bg-white shadow-md p-6 rounded-lg">
-    <h1 class="text-3xl font-bold mb-4">Panel de Usuario</h1>
-
+<body>
+  <div class="container">
     <!-- Usuario actual -->
-    <div class="mb-6">
-      <h2 class="text-xl font-semibold">Información del Usuario</h2>
-      <p><strong>Nombre:</strong> <span id="username" class="text-blue-600"></span></p>
-      <p><strong>Email:</strong> <span id="email" class="text-blue-600"></span></p>
+    <div class="card">
+      <div class="card-header">
+        <h1 class="title">Panel de Usuario</h1>
+      </div>
+      <div class="user-info">
+        <strong>Nombre:</strong>
+        <span id="username"></span>
+        <strong>Email:</strong>
+        <span id="email"></span>
+      </div>
     </div>
 
     <!-- Barra de búsqueda -->
-    <div class="mb-6">
-      <h2 class="text-xl font-semibold mb-2">Buscar Usuario</h2>
-      <div class="flex gap-2">
-        <input id="search" type="text" placeholder="Username o Email" class="flex-1 border rounded px-3 py-2"/>
-        <button onclick="buscarUsuario()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Buscar</button>
+    <div class="card">
+      <h2 class="subtitle">Buscar Usuario</h2>
+      <div class="input-group">
+        <input id="search" type="text" placeholder="Username o Email"/>
+        <button onclick="buscarUsuario()">Buscar</button>
       </div>
-      <div id="resultadoBusqueda" class="mt-4"></div>
+      <div id="resultadoBusqueda" class="search-result"></div>
     </div>
 
     <!-- Repositorios -->
-    <div class="mb-6">
-      <h2 class="text-xl font-semibold">Mis Repositorios</h2>
-      <ul id="repositorios" class="mt-2 space-y-2"></ul>
+    <div class="card">
+      <h2 class="subtitle">Mis Repositorios</h2>
+      <ul id="repositorios" class="repo-list"></ul>
     </div>
 
     <!-- Transferencias -->
-    <div class="mb-6">
-      <h2 class="text-xl font-semibold">Repositorios Transferidos</h2>
-      <ul id="transferencias" class="mt-2 space-y-2"></ul>
+    <div class="card">
+      <h2 class="subtitle">Repositorios Transferidos</h2>
+      <ul id="transferencias" class="repo-list"></ul>
     </div>
 
     <!-- Subir repositorio -->
-    <div class="mb-6">
-      <button onclick="cargarReposGitHub()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Subir Repositorio</button>
-      <div id="reposGitHub" class="mt-4 space-y-2"></div>
+    <div class="card">
+      <h2 class="subtitle">Subir Repositorio</h2>
+      <button onclick="cargarReposGitHub()" class="secondary">Cargar Repositorios de GitHub</button>
+      <div id="reposGitHub" class="github-repos"></div>
     </div>
   </div>
 
@@ -61,31 +65,70 @@
       renderRepos(data.user.transfer_repository, 'transferencias');
     }
 
+    async function borrarRepositorio(repoId) {
+      if (!confirm('¿Estás seguro de que deseas eliminar este repositorio?')) {
+        return;
+      }
+
+      try {
+        const response = await fetchWithCookies(`/delete_repository/${repoId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+          alert('Repositorio eliminado correctamente.');
+          cargarUsuarioActual(); // Recargar la lista de repositorios
+        } else {
+          const data = await response.json();
+          alert(`Error al eliminar el repositorio: ${data.detail}`);
+        }
+      } catch (error) {
+        alert('Error al eliminar el repositorio');
+        console.error('Error:', error);
+      }
+    }
+
     function renderRepos(repos, containerId, permitirObtener = false, sellerId = null) {
       const contenedor = document.getElementById(containerId);
       contenedor.innerHTML = '';
 
       if (!repos || repos.length === 0) {
-        contenedor.innerHTML = '<p class="text-gray-500">Sin repositorios.</p>';
+        contenedor.innerHTML = '<p class="text-secondary">Sin repositorios.</p>';
         return;
       }
 
       repos.forEach(repo => {
         const item = document.createElement('li');
-        item.className = 'bg-gray-100 p-3 rounded shadow-sm flex justify-between items-center';
+        item.className = 'repo-item';
         item.innerHTML = `
-          <div>
-            <p class="font-medium">${repo.name}</p>
-            <a href="${repo.url}" class="text-blue-600 underline" target="_blank">${repo.url}</a>
+          <div class="repo-info">
+            <h3>${repo.name}</h3>
+            <a href="${repo.url}" target="_blank">${repo.url}</a>
+          </div>
+          <div class="repo-actions">
           </div>
         `;
+        
+        const actionsDiv = item.querySelector('.repo-actions');
+
+        // Si es la lista de "Mis Repositorios", mostrar botón de eliminar
+        if (containerId === 'repositorios') {
+          const deleteBtn = document.createElement('button');
+          deleteBtn.textContent = 'Eliminar';
+          deleteBtn.className = 'delete-btn';
+          deleteBtn.onclick = () => borrarRepositorio(repo.repository_id);
+          actionsDiv.appendChild(deleteBtn);
+        }
+
+        // Si es la lista de búsqueda, mostrar botón de obtener
         if (permitirObtener) {
           const btn = document.createElement('button');
           btn.textContent = 'Obtener';
-          btn.className = 'bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700';
           btn.onclick = () => obtenerRepositorio(repo, sellerId);
-          item.appendChild(btn);
+          actionsDiv.appendChild(btn);
         }
+
         contenedor.appendChild(item);
       });
     }
@@ -101,11 +144,14 @@
 
       const contenedor = document.getElementById('resultadoBusqueda');
       contenedor.innerHTML = `
-        <h3 class="text-lg font-semibold">Usuario Encontrado</h3>
-        <p><strong>Nombre:</strong> ${data.user.profile.username}</p>
-        <p><strong>Email:</strong> ${data.user.profile.email}</p>
-        <h4 class="font-semibold mt-2">Repositorios:</h4>
-        <ul id="reposBuscados" class="space-y-2 mt-1"></ul>
+        <div class="user-info">
+          <strong>Nombre:</strong>
+          <span>${data.user.profile.username}</span>
+          <strong>Email:</strong>
+          <span>${data.user.profile.email}</span>
+        </div>
+        <h3 class="subtitle">Repositorios Disponibles</h3>
+        <ul id="reposBuscados" class="repo-list"></ul>
       `;
 
       renderRepos(data.user.repositories, 'reposBuscados', true, data.user.profile.id);
@@ -121,7 +167,7 @@
       repos.forEach(repo => {
         const btn = document.createElement('button');
         btn.textContent = `${repo.nombre} (${repo.visibilidad})`;
-        btn.className = 'block w-full text-left px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded';
+        btn.className = 'block w-full text-left px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded';
         btn.onclick = () => subirRepositorio(repo.nombre, repo.url);
         contenedor.appendChild(btn);
       });
@@ -130,10 +176,7 @@
     async function subirRepositorio(nombre, url) {
       await fetchWithCookies('/upload_repository', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include', // Incluye cookies y otras credenciales
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name_repository: nombre,
           url_repository: url
@@ -157,7 +200,6 @@
       cargarUsuarioActual();
     }
 
-    // Inicializar
     cargarUsuarioActual();
   </script>
 </body>

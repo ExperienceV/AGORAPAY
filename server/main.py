@@ -8,19 +8,22 @@ import os
 from icecream import ic
 from middlewares import TokenRefreshMiddleware
 from dotenv import load_dotenv
-ic.disable()
+from config import settings
 
 ic("Iniciando aplicación FastAPI")
 app = FastAPI()
 ic("Cargando variables de entorno desde .env")
 load_dotenv()
 
+
+# Configuración de CORS más específica
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permitir cualquier origen
-    allow_credentials=True,
-    allow_methods=["*"],  # Permitir todos los métodos (GET, POST, etc.)
-    allow_headers=["*"],  # Permitir todos los encabezados
+    allow_origins=settings.CORS_ALLOW_ORIGINS,
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+    allow_methods=settings.CORS_ALLOW_METHODS,
+    allow_headers=settings.CORS_ALLOW_HEADERS,
+    expose_headers=["Set-Cookie"],
 )
 
 ic("Configurando middlewares")
@@ -33,20 +36,26 @@ app.add_middleware(
     secret_key=os.getenv("SESSION_SECRET_KEY")
 )
 
-ic("Configurando manejador de excepciones HTTP")
-@app.exception_handler(StarletteHTTPException)
-async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
-    if exc.status_code in (401, 403):
-        ic("Redirigiendo a la página de login debido a error de autenticación")
-        return RedirectResponse(url="/login")
-    ic(f"Excepción HTTP capturada: {exc.status_code} - {exc.detail}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail}
-    )
+# ic("Configurando manejador de excepciones HTTP")
+# @app.exception_handler(StarletteHTTPException)
+# async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+#     if exc.status_code in (401, 403):
+#         ic("Redirigiendo a la página de login debido a error de autenticación")
+#         return RedirectResponse(url="/login")
+#     ic(f"Excepción HTTP capturada: {exc.status_code} - {exc.detail}")
+#     return JSONResponse(
+#         status_code=exc.status_code,
+#         content={"detail": exc.detail}
+#     )
 
 ic("Montando directorio estático para archivos estáticos")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.get("/me")
+def me(request: Request):
+    return {"message": "Hello, World!"} 
+
 
 ic("Importando routers de diferentes módulos")
 from routers.github.auth import router as github_router

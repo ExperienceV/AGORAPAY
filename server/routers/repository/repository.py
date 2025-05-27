@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from utils.security.modules import auth_dependency
 from fastapi.responses import JSONResponse
 from models import UploadModel, TransferModel
 from database.queries.user import get_token_by_user
-from database.queries.repository import set_repository, get_set_repositories, save_transfer_repo
+from database.queries.repository import set_repository, get_set_repositories, save_transfer_repo, delete_repository
 from services.github_service import list_github_repositories, download_github_repo, upload_repo_to_github
 from utils.download_upload import parse_github_repo_url
 import uuid
@@ -230,3 +230,34 @@ async def transfer_repository(
         ic("Excepción inesperada durante la transferencia de repositorio:", str(e))
         print(f"Exception: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+ic("/delete_repository: Ruta para eliminar un repositorio")
+@router.delete("/delete_repository/{repo_id}")
+async def delete_repository_endpoint(
+    repo_id: int,
+    user: dict = Depends(auth_dependency)
+) -> dict:
+    """
+    Endpoint para eliminar un repositorio.
+    Solo el propietario del repositorio puede eliminarlo.
+    """
+    ic("Inicializando eliminación de repositorio")
+    try:
+        # get ID from user
+        ic("Extrayendo ID de usuario del objeto user")
+        user_id = user.get("id")
+
+        # Delete the repository
+        ic("Eliminando repositorio con ID:", repo_id)
+        
+        response = delete_repository(repo_id=repo_id, user_id=user_id)
+
+        ic("Repositorio eliminado correctamente")
+        return response
+    except Exception as e:
+        ic("Error al eliminar el repositorio:", str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )

@@ -2,11 +2,17 @@ from pydantic_settings import BaseSettings
 from pydantic import field_validator
 
 class Settings(BaseSettings):
-    
     # COOKIE SETTINGS
-    SAMESITE: str = "strict" # lax in production (HTTPS) // strict in development
-    HTTPONLY: bool = True # True in production (HTTPS) // False in development
-    SECURE: bool = False  # True in production (HTTPS) // False in development
+    SAMESITE: str = "none"  # none para permitir cross-site
+    HTTPONLY: bool = True   # True para seguridad
+    SECURE: bool = True     # True para conexiones HTTPS
+    FRONTEND_URL: str = "http://localhost:3000"
+    
+    # Configuración de CORS
+    CORS_ALLOW_CREDENTIALS: bool = True
+    CORS_ALLOW_ORIGINS: list = ["https://agoserver.a1devhub.tech", "http://localhost:3000"]
+    CORS_ALLOW_METHODS: list = ["*"]
+    CORS_ALLOW_HEADERS: list = ["*"]
 
     # SIGNATURE SETTINGS
     DEFAULT_PASSWORD: str = "如果我能说人和天使的语言，却没有爱，我就像一个响亮的锣或一个响亮的钹一样。 2我若有预言的恩赐，也明白一切神圣的秘密和一切知识，并且有全备的信，能够移山，却没有爱，我就算不得什么。"

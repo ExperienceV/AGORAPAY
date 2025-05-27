@@ -175,3 +175,28 @@ def get_transfer_repo(
 
     ic("Repositorios comprados encontrados:", len(repo_data))
     return repo_data
+
+
+# Eliminar un repositorio de la base de datos
+ic("Definiendo la función delete_repository para eliminar un repositorio")
+def delete_repository(repo_id: int, user_id: int):
+    db = get_db()
+    try:
+        ic("Iniciando la transacción para eliminar el repositorio")
+        # Buscar el repositorio
+        repo = db.query(Repository).filter_by(id=repo_id, uploader_id=user_id).first()
+
+        if not repo:
+            ic("Repositorio no encontrado o no pertenece al usuario")
+            raise Exception("Repositorio no encontrado o no tienes permisos para borrarlo")
+
+        # Eliminar el repositorio
+        db.delete(repo)
+        db.commit()
+
+        ic("Repositorio eliminado correctamente")
+        return {"message": "Repositorio eliminado correctamente", "repo_id": repo_id}
+    except Exception as e:
+        ic("Error al eliminar el repositorio:", str(e))
+        db.rollback()
+        raise Exception(f"Error al eliminar el repositorio: {str(e)}")

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
 from services.auth_service import register_github_oauth
-from starlette.responses import HTMLResponse
+from starlette.responses import RedirectResponse
 from config import settings
 from database.queries.user import add_user
 from pathlib import Path
@@ -24,7 +24,7 @@ async def login_with_github(request: Request):
 
 ic("/callback: Ruta de callback para GitHub")
 # Define the callback endpoint
-@router.get("/callback", response_class=HTMLResponse)
+@router.get("/callback", name="github_callback")    
 async def github_callback(request: Request):
     ic("Procesando callback de GitHub")
     oauth = register_github_oauth()
@@ -62,35 +62,40 @@ async def github_callback(request: Request):
     access_token = create_access_token(data={"id": user_id, "name": username, "email": email})
     refresh_token = create_refresh_token(data={"id": user_id, "name": username, "email": email})
 
-    # read the HTML file
-    ic("Leyendo archivo HTML de callback")
-    path = Path("static/callback.html")
 
-    # Create response
-    ic("Creando respuesta HTML con cookies de autenticación")
-    response = HTMLResponse(
-        content=path.read_text(encoding="utf-8"),
-        status_code=200
-    )
+    # Create response with specific headers
+    frontend_callback_url = f"{settings.FRONTEND_URL}/callback"
+    response = RedirectResponse(url=frontend_callback_url)
+    
+    # Configurar las cookies con la configuración correcta
+    cookie_settings = {
+        "httponly": settings.HTTPONLY,
+        "secure": settings.SECURE,
+        "samesite": settings.SAMESITE,
+        "domain": "a1devhub.tech",  # Dominio principal
+        "path": "/"  # Accesible en todas las rutas
+    }
 
-    ic("Estableciendo cookies de autenticación")
+    # Establecer cookies de autenticación
     response.set_cookie(
         key="access_token",
         value=f"Bearer {access_token}",
-        httponly=settings.HTTPONLY,
-        secure=settings.SECURE,  # True en producción (HTTPS)
-        samesite=settings.SAMESITE,
-        max_age=settings.ACCESS_TOKEN_MAX_AGE # 15 DAYS
+        max_age=settings.ACCESS_TOKEN_MAX_AGE,
+        **cookie_settings
     )
 
     response.set_cookie(
         key="refresh_token",
         value=f"Bearer {refresh_token}",
-        httponly=settings.HTTPONLY,
-        secure=settings.SECURE,  # True en producción (HTTPS)
-        samesite=settings.SAMESITE,
-        max_age=settings.REFRESH_TOKEN_MAX_AGE # 30 DAYS
+        max_age=settings.REFRESH_TOKEN_MAX_AGE,
+        **cookie_settings
     )
+
+    # Agregar headers específicos para CORS
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Origin"] = settings.FRONTEND_URL
+    
     ic("Respuesta preparada con cookies de autenticación")
     return response
+
 
