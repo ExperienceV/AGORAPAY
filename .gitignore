@@ -6,4 +6,5 @@ crypt_key.py
 .env
 /tests
 pytest.ini
-config.yml
+agora.config.yml
+play_tunnel.py
