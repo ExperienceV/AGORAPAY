@@ -1,3 +1,6 @@
+import httpx
+from urllib.parse import quote
+import base64
 import requests
 import tempfile
 import subprocess
@@ -5,6 +8,7 @@ import shutil
 from pathlib import Path
 import zipfile
 from icecream import ic
+from typing import Optional
 
 
 def download_github_repo(owner: str, repo: str, access_token: str, branch: str = "main") -> tuple[Path, Path]:
@@ -129,15 +133,89 @@ def list_github_repositories(access_token: str):
     response = requests.get(url, headers=headers, params=params)
     ic(response.status_code)
 
-    if response.status_code == 200:
+    if response.status_code == 200:        
         repos_data = []
-        for repo in response.json():
+        for repo in response.json():            
             repos_data.append({
                 "nombre": repo["name"],
                 "url": repo["html_url"],
-                "visibilidad": "Privado" if repo["private"] else "Público"
+                "visibilidad": "Privado" if repo["private"] else "Público",
+                "default_branch": repo["default_branch"],
+                "default_branch": repo["default_branch"]
             })
         ic(len(repos_data))
         return repos_data
     else:
         raise Exception(f"Error al obtener repositorios: {response.status_code} - {response.text}")
+
+
+def search_repo_tree(
+    owner: str = "ExperienceV", 
+    repo: str = "ChatBot-OpenAI", 
+    branch: str = "main",
+    token: str = None
+):
+    headers = {
+        "Accept": "application/vnd.github.v3+json"
+    }
+
+    if token:
+        headers["Authorization"] = f"token {token}"
+
+    try:
+        # Obtener el SHA del último commit en el branch
+        url_branch = f"https://api.github.com/repos/{owner}/{repo}/branches/{branch}"
+        response_branch = requests.get(url_branch, headers=headers)
+        response_branch.raise_for_status()
+        sha_commit = response_branch.json()["commit"]["sha"]
+
+        # Obtener el árbol del repositorio usando el SHA del commit
+        url_tree = f"https://api.github.com/repos/{owner}/{repo}/git/trees/{sha_commit}?recursive=1"
+        response_tree = requests.get(url_tree, headers=headers)
+        response_tree.raise_for_status()
+
+        return response_tree.json()
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error al obtener el árbol del repositorio: {e}")
+        return None
+    
+
+async def fetch_file_from_repo(
+    owner: str,
+    repo: str,
+    path: str,
+    token: Optional[str] = None
+) -> dict:
+    headers = {
+        "Accept": "application/vnd.github.v3+json"
+    }
+    if token:
+        headers["Authorization"] = f"token {token}"
+
+    encoded_path = quote(path)
+    url = f"https://api.github.com/repos/{owner}/{repo}/contents/{encoded_path}"
+    print(f"Url: {url}")
+
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url, headers=headers)
+
+    if r.status_code != 200:
+        return {
+            "content": f"// Error {r.status_code}: no se pudo obtener el archivo"
+        }
+
+    data = r.json()
+    if "content" not in data:
+        return {
+            "content": "// El archivo no contiene datos válidos"
+        }
+
+    try:
+        content = base64.b64decode(data["content"]).decode("utf-8", errors="ignore")
+        preview = "\n".join(content.splitlines()[:30])
+        return {"content": preview}
+    except Exception as e:
+        return {"content": f"// Error al decodificar el archivo: {e}"}
+
+

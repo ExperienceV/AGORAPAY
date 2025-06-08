@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends, status
 from services.auth_service import register_github_oauth
-from starlette.responses import RedirectResponse
+from starlette.responses import RedirectResponse, Response, JSONResponse
 from config import settings
+from utils.security.modules import auth_dependency
 from database.queries.user import add_user
 from pathlib import Path
 from utils.security.signature import create_access_token, create_refresh_token
@@ -9,7 +10,6 @@ from icecream import ic
 
 ic("-- Inicio del módulo de autenticación con GitHub --")
 router = APIRouter(prefix="/auth/github", tags=["auth"])
-
 
 
 # Define the redirect URI
@@ -64,15 +64,17 @@ async def github_callback(request: Request):
 
 
     # Create response with specific headers
-    frontend_callback_url = f"{settings.FRONTEND_URL}/callback"
-    response = RedirectResponse(url=frontend_callback_url)
+    from fastapi.responses import JSONResponse
+    #response = JSONResponse(content={"redirect_url": f"{settings.FRONTEND_URL}/callback"})
+    response = RedirectResponse(url=f"{settings.FRONTEND_URL}/callback")
     
     # Configurar las cookies con la configuración correcta
     cookie_settings = {
         "httponly": settings.HTTPONLY,
         "secure": settings.SECURE,
         "samesite": settings.SAMESITE,
-        "path": "/"  # Accesible en todas las rutas
+        "path": "/",  # Accesible en todas las rutas
+        "domain": settings.DOMAIN
     }
 
     # Establecer cookies de autenticación
@@ -98,3 +100,9 @@ async def github_callback(request: Request):
     return response
 
 
+@router.post("/logout")
+def logout():
+    response = JSONResponse(content={"message": "Sesión cerrada"})
+    response.delete_cookie("access_token", domain=".a1devhub.tech")
+    response.delete_cookie("refresh_token", domain=".a1devhub.tech")
+    return response

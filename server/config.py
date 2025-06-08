@@ -3,17 +3,16 @@ from pydantic import field_validator
 
 class Settings(BaseSettings):
     # COOKIE SETTINGS
-    SAMESITE: str = "none"  # none para permitir cross-site
+    SAMESITE: str = "strict"  # none para permitir cross-site
     HTTPONLY: bool = True   # True para seguridad
     SECURE: bool = True     # True para conexiones HTTPS
-    FRONTEND_URL: str = "https://agora-devs.vercel.app"
+    FRONTEND_URL: str = "https://agoraports.a1devhub.tech"
+    DOMAIN: str = ".a1devhub.tech"
     
     # Configuración de CORS
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_ORIGINS: list = [
-                                "https://agora-devs.vercel.app",
-                                "http://localhost:3000",
-                                "http://agoserver.a1devhub.tech"
+                        "https://agoraports.a1devhub.tech"
                             ]
     CORS_ALLOW_METHODS: list = ["*"]
     CORS_ALLOW_HEADERS: list = ["*"]
@@ -35,6 +34,12 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_SECRET: str
     SESSION_SECRET_KEY: str
     FERNET_KEY: str
+
+    # PAYMENT SETTINGS
+        # PAYPAL:
+    PAYPAL_CLIENT_ID: str
+    PAYPAL_SECRET: str
+    PAYPAL_API_URL: str
 
     class Config:
         env_file = ".env"

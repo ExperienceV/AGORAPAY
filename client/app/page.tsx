@@ -17,20 +17,18 @@ export default function HomePage() {
 
   const checkAuthentication = async () => {
     try {
-      const response = await fetch("https://agoserver.a1devhub.tech/me", {
+      const response = await fetch("https://agoserver.a1devhub.tech/auth/verify_user", {
         method: "GET",
-        credentials: "include", // Incluir cookies
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
       })
 
-      console.log(response)
       if (response.status === 200) {
         setIsAuthenticated(true)
       } else {
         setIsAuthenticated(false)
-        // Redirigir a login si no está autenticado
         setTimeout(() => {
           router.push("/login")
         }, 2000)
@@ -46,11 +44,16 @@ export default function HomePage() {
     }
   }
 
-  const handleLogout = () => {
-    // Limpiar cookies y redirigir a login
-    document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=a1devhub.tech;"
-    document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=a1devhub.tech;"
+  const handleLogout = async () => {
+    await fetch("https://agoserver.a1devhub.tech/auth/github/logout", {
+      method: "POST",
+      credentials: "include",
+    })
     router.push("/login")
+  }
+
+  const handleDashboardRedirect = () => {
+    router.push("/dashboard")
   }
 
   if (isLoading) {
@@ -83,9 +86,14 @@ export default function HomePage() {
               <p className="text-gray-600 text-center">
                 Tu sesión está activa y puedes acceder a todas las funcionalidades.
               </p>
-              <Button onClick={handleLogout} variant="outline" className="w-full">
-                Cerrar Sesión
-              </Button>
+              <div className="flex w-full gap-2">
+                <Button onClick={handleDashboardRedirect} className="w-full">
+                  Ir al Dashboard
+                </Button>
+                <Button onClick={handleLogout} variant="outline" className="w-full">
+                  Cerrar Sesión
+                </Button>
+              </div>
             </>
           ) : (
             <>

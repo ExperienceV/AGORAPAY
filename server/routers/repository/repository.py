@@ -70,7 +70,7 @@ async def upload_repository(
     Endpoint to upload a repository.
     """
     ic("Inicializando subida de repositorio")
-    ic("Subiendo repositorio:", up_model.name_repository, "con URL:", up_model.url_repository)
+    ic("Subiendo repositorio:", up_model.name_repository, "con URL:", up_model.url_repository, "rama:", up_model.branch)
     print("Subiendo repositorio:")
     try:
         # get name from user
@@ -82,11 +82,12 @@ async def upload_repository(
         user_id = user.get("id")
 
         # Upload the repository using the service
-        ic("Subiendo metadatos del repositorio a la base de datos")
+        ic("Subiendo metadatos del repositorio a la base de datos")        
         response = set_repository(
-            user_id=user_id,
+            user_id=user_id,            
             name_repository=up_model.name_repository,
-            url_repository=up_model.url_repository)
+            url_repository=up_model.url_repository,
+            branch=up_model.branch)
 
         ic("Respuesta de la base de datos:", response)
         if not response:
@@ -205,13 +206,21 @@ async def transfer_repository(
         ic("Repositorio subido con éxito. Nueva URL del repositorio:", new_repo_url)
 
         # Save repo information in the database
-        ic("Guardando información del repositorio transferido en la base de datos")
+        ic("Guardando información del repositorio transferido en la base de datos")        # Get the branch from the seller's repository
+        source_repo = next(
+            (repo for repo in data_repo if repo["repository_id"] == repo_id),
+            None
+        )
+        if not source_repo:
+            raise Exception("Source repository not found")
+
         transfer_response = save_transfer_repo(
             user_id=user["id"],
             repo_name=unique_name,
             repo_url=new_repo_url,
             seller_id=seller_id,
-            seller_repo_id=repo_id
+            seller_repo_id=repo_id,
+            branch=source_repo.get("branch", "main")
         )
         ic("Respuesta de la base de datos al guardar la transferencia:", transfer_response)
 

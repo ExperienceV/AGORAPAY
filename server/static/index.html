@@ -100,11 +100,11 @@
 
       repos.forEach(repo => {
         const item = document.createElement('li');
-        item.className = 'repo-item';
-        item.innerHTML = `
+        item.className = 'repo-item';        item.innerHTML = `
           <div class="repo-info">
             <h3>${repo.name}</h3>
             <a href="${repo.url}" target="_blank">${repo.url}</a>
+            <p>Rama: ${repo.branch || 'main'}</p>
           </div>
           <div class="repo-actions">
           </div>
@@ -162,24 +162,21 @@
       const repos = await res.json();
 
       const contenedor = document.getElementById('reposGitHub');
-      contenedor.innerHTML = '';
-
-      repos.forEach(repo => {
+      contenedor.innerHTML = '';      repos.forEach(repo => {
         const btn = document.createElement('button');
         btn.textContent = `${repo.nombre} (${repo.visibilidad})`;
         btn.className = 'block w-full text-left px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded';
-        btn.onclick = () => subirRepositorio(repo.nombre, repo.url);
+        btn.onclick = () => subirRepositorio(repo.nombre, repo.url, repo.default_branch || "main");
         contenedor.appendChild(btn);
       });
-    }
-
-    async function subirRepositorio(nombre, url) {
+    }    async function subirRepositorio(nombre, url, branch) {
       await fetchWithCookies('/upload_repository', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name_repository: nombre,
-          url_repository: url
+          url_repository: url,
+          branch: branch
         })
       });
       alert('Repositorio subido.');

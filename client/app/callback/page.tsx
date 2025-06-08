@@ -2,86 +2,73 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Loader2, CheckCircle, XCircle } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { CheckCircle, AlertCircle, Loader2 } from "lucide-react"
 
 export default function CallbackPage() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
-  const [message, setMessage] = useState("Procesando autenticación...")
+  const [message, setMessage] = useState("")
   const router = useRouter()
 
   useEffect(() => {
-    // Simular el procesamiento del callback
-    // En este punto, el backend ya debería haber establecido las cookies
-    const timer = setTimeout(() => {
-      // Verificar si las cookies fueron establecidas
-      const hasAccessToken = document.cookie.includes("access_token")
-      const hasRefreshToken = document.cookie.includes("refresh_token")
+    const handleCallback = async () => {
+      try {
+        const res = await fetch("https://agoserver.a1devhub.tech/auth/verify_user", {
+          credentials: "include",
+        })
 
-      if (hasAccessToken && hasRefreshToken) {
-        setStatus("success")
-        setMessage("¡Autenticación exitosa!")
+        if (res.status === 200) {
+          setStatus("success")
+          setMessage("Autenticación exitosa. Redirigiendo al dashboard...")
 
-        // Redirigir a la página principal después de 2 segundos
-        setTimeout(() => {
-          router.push("/")
-        }, 2000)
-      } else {
+          setTimeout(() => {
+            router.push("/dashboard")
+          }, 2000)
+        } else {
+          setStatus("error")
+          setMessage("Error en la autenticación. No se pudieron verificar las credenciales.")
+        }
+      } catch (error) {
         setStatus("error")
-        setMessage("Error en la autenticación. No se pudieron establecer las credenciales.")
+        setMessage("Error inesperado durante la autenticación.")
+        console.error("Callback error:", error)
       }
-    }, 2000)
+    }
 
-    return () => clearTimeout(timer)
+    handleCallback()
   }, [router])
 
-  const handleRetry = () => {
-    router.push("/login")
-  }
-
-  const handleGoHome = () => {
-    router.push("/")
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
+      <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-700/50 shadow-2xl w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">
-            {status === "loading" && "Procesando..."}
-            {status === "success" && "¡Éxito!"}
-            {status === "error" && "Error"}
-          </CardTitle>
-          <CardDescription>Callback de autenticación de GitHub</CardDescription>
+          <CardTitle className="text-xl text-white">Procesando Autenticación</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col items-center space-y-4">
+        <CardContent className="text-center space-y-4">
           {status === "loading" && (
             <>
-              <Loader2 className="h-16 w-16 animate-spin text-blue-600" />
-              <p className="text-gray-600 text-center">{message}</p>
+              <Loader2 className="w-12 h-12 mx-auto text-blue-500 animate-spin" />
+              <p className="text-gray-400">Verificando credenciales...</p>
             </>
           )}
 
           {status === "success" && (
             <>
-              <CheckCircle className="h-16 w-16 text-green-500" />
-              <p className="text-lg font-semibold text-green-700">{message}</p>
-              <p className="text-gray-600 text-center">Serás redirigido a la página principal...</p>
-              <Button onClick={handleGoHome} className="w-full">
-                Ir a Inicio
-              </Button>
+              <CheckCircle className="w-12 h-12 mx-auto text-green-500" />
+              <p className="text-green-400">{message}</p>
             </>
           )}
 
           {status === "error" && (
             <>
-              <XCircle className="h-16 w-16 text-red-500" />
-              <p className="text-lg font-semibold text-red-700">{message}</p>
-              <p className="text-gray-600 text-center">Por favor, intenta iniciar sesión nuevamente.</p>
-              <Button onClick={handleRetry} className="w-full">
-                Volver a Intentar
-              </Button>
+              <AlertCircle className="w-12 h-12 mx-auto text-red-500" />
+              <p className="text-red-400">{message}</p>
+              <button
+                onClick={() => router.push("/")}
+                className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              >
+                Volver al inicio
+              </button>
             </>
           )}
         </CardContent>

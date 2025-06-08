@@ -18,7 +18,7 @@ def get_db():
 
 # Asociar un repositorio como subido por el usuario
 ic("Definiendo la función set_repository para asociar un repositorio subido por el usuario")
-def set_repository(user_id: int, name_repository: str, url_repository: str):
+def set_repository(user_id: int, name_repository: str, url_repository: str, branch: str = "main"):
     db = get_db()
     try:
         ic("Iniciando la transacción para subir el repositorio")
@@ -28,7 +28,7 @@ def set_repository(user_id: int, name_repository: str, url_repository: str):
 
         # Crear el objeto repositorio dentro de la función
         ic("Creando el objeto Repository con los datos proporcionados")
-        repo = Repository(name=name_repository, url=url_repository, uploader_id=user_id)
+        repo = Repository(name=name_repository, url=url_repository, branch=branch, uploader_id=user_id)
         # Asociar el repositorio al usuario
         ic("Asociando el repositorio al usuario con ID:", user_id)
         db.add(repo)
@@ -75,10 +75,10 @@ def get_set_repositories(
     ic("Convirtiendo los repositorios a un formato serializable")
     return [
         {
-            "uploader_id": repo.uploader_id,
-            "repository_id": repo.id,
+            "uploader_id": repo.uploader_id,            "repository_id": repo.id,
             "name": repo.name,
             "url": repo.url,
+            "branch": repo.branch,
             "is_transfer": repo.is_transfer
         } for repo in repos
     ]
@@ -91,7 +91,8 @@ def save_transfer_repo(
     repo_name: str,
     repo_url: str,
     seller_id: int,
-    seller_repo_id: int
+    seller_repo_id: int,
+    branch: str = "main"
 ):
     db = get_db()
 
@@ -103,14 +104,15 @@ def save_transfer_repo(
         raise Exception("Comprador no encontrado")
 
     # Crear el nuevo repositorio para el comprador
-    ic("Creando un nuevo repositorio para el comprador")
+    ic("Creando un nuevo repositorio para el comprador")    
     nuevo_repo = Repository(
         name=repo_name,
         url=repo_url,
+        branch=branch,
         uploader_id=user_id,
         seller_id=seller_id,
         seller_repo_id=seller_repo_id,
-        is_transfer=True  # 👈 Esto es lo importante
+        is_transfer=True# 👈 Esto es lo importante
     )
     # Asociar el repositorio al comprador
     ic("Asociando el nuevo repositorio al comprador con ID:", user_id)
@@ -124,12 +126,13 @@ def save_transfer_repo(
     db.commit()
     db.refresh(comprador)
 
-    ic("Repositorio comprado y guardado correctamente con ID:", nuevo_repo.id)
+    ic("Repositorio comprado y guardado correctamente con ID:", nuevo_repo.id)    
     return {
         "message": "Repositorio comprado y guardado correctamente",
         "repo_id": nuevo_repo.id,
         "repo_name": nuevo_repo.name,
         "repo_url": nuevo_repo.url,
+        "branch": nuevo_repo.branch,
         "seller_id": nuevo_repo.seller_id,
         "seller_repo_id": nuevo_repo.seller_repo_id
     }
@@ -161,12 +164,13 @@ def get_transfer_repo(
         return None
     
     # Convertir los repositorios a un formato serializable
-    ic("Convirtiendo los repositorios comprados a un formato serializable")
+    ic("Convirtiendo los repositorios comprados a un formato serializable")    
     repo_data = [
         {
             "repository_id": repo.id,
             "name": repo.name,
             "url": repo.url,
+            "branch": repo.branch,
             "uploader_id": repo.uploader_id,
             "seller_id": repo.seller_id,
             "seller_repo_id": repo.seller_repo_id

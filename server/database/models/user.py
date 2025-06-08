@@ -17,11 +17,11 @@ user_purchased_repositories = Table(
 # Represents a repository in the database
 ic("Definiendo el modelo Repository para representar un repositorio en la base de datos")
 class Repository(Base):
-    __tablename__ = "repositories"
-
+    __tablename__ = "repositories"    
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     url = Column(String)
+    branch = Column(String, default="main")  # New field for branch
     uploader_id = Column(Integer, ForeignKey("users.id"))
 
     # Metadatos del vendedor
