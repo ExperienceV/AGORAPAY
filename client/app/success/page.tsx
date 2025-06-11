@@ -37,6 +37,17 @@ export default function SuccessPage() {
       const repoName = searchParams.get("repo_name")
       const repoUrl = searchParams.get("repo_url")
 
+      const json_rqst = {
+          authorization_id: authorizationId,
+          seller_id: sellerId,
+          repo_name: repoName,
+          repo_url: repoUrl
+        }
+
+
+      console.log("Datos para enviar:")
+      console.log(json_rqst)
+
       // Verificar que tenemos todos los datos necesarios
       if (!sellerId || !repoName || !repoUrl) {
         setError("Faltan datos necesarios para completar la compra")
@@ -44,14 +55,26 @@ export default function SuccessPage() {
         return
       }
 
+      const sellerIdInt = parseInt(sellerId);
+      console.log(typeof sellerIdInt); // debe mostrar "number"
+
+      const formData = new FormData();
+      formData.append("authorization_id", authorizationId);
+      formData.append("seller_id", sellerIdInt.toString());
+      formData.append("repo_name", repoName);
+      formData.append("repo_url", repoUrl);
+
+      console.log("FormData:");
+      for (let pair of formData.entries()) {
+        console.log(`${pair[0]}: ${pair[1]}`);
+      }
+
       const response = await fetch("https://agoserver.a1devhub.tech/confirm", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: `authorization_id=${authorizationId}&seller_id=${sellerId}&repo_name=${encodeURIComponent(repoName)}&repo_url=${encodeURIComponent(repoUrl)}`,
+        body: formData,
         credentials: "include",
-      })
+      });
+
 
       if (response.ok) {
         const result = await response.json()

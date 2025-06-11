@@ -6,43 +6,52 @@ from utils.security.modules import auth_dependency
 from database.queries.user import add_user
 from pathlib import Path
 from utils.security.signature import create_access_token, create_refresh_token
-from icecream import ic
 
-ic("-- Inicio del módulo de autenticación con GitHub --")
-router = APIRouter(prefix="/auth/github", tags=["auth"])
+router = APIRouter(prefix="/auth/github", tags=["github"])
 
-
-# Define the redirect URI
-ic("/login: Ruta para iniciar sesión con GitHub")
 @router.get('/login')
 async def login_with_github(request: Request):
-    ic("Iniciando sesión con GitHub")
+    """
+    Inicia el flujo de autenticación OAuth con GitHub.
+
+    📥 Parámetros:
+        - request (Request): La solicitud HTTP entrante.
+
+    📤 Retorna:
+        - Una redirección al endpoint de autorización de GitHub.
+    """
     oauth = register_github_oauth()
     redirect_uri = request.url_for('github_callback')
     return await oauth.github.authorize_redirect(request, redirect_uri)
 
 
-ic("/callback: Ruta de callback para GitHub")
-# Define the callback endpoint
-@router.get("/callback", name="github_callback")    
+@router.get("/callback", name="github_callback")
 async def github_callback(request: Request):
-    ic("Procesando callback de GitHub")
-    oauth = register_github_oauth()
-    # get the authorization response
-    token = await oauth.github.authorize_access_token(request)
+    """
+    Callback que maneja la respuesta de GitHub tras el login.
 
-    # get the access token
+    📥 Parámetros:
+        - request (Request): La solicitud HTTP con el código de autorización.
+
+    🧠 Lógica:
+        - Intercambia el código por un token de acceso.
+        - Obtiene información del usuario desde GitHub.
+        - Registra al usuario en la base de datos (si no existe).
+        - Genera y establece cookies con JWTs (access y refresh).
+        - Redirige al frontend.
+
+    📤 Retorna:
+        - Una redirección al frontend con las cookies establecidas.
+    """
+    oauth = register_github_oauth()
+    token = await oauth.github.authorize_access_token(request)
     access_token = token.get('access_token')
 
-    # get the user info
     user_info = await oauth.github.get('user', token=token)
     user = user_info.json()
-
-    # get the user name
     username = user.get("login")
-
-    # get the user email
     email = user.get("email")
+
     if not email:
         emails_resp = await oauth.github.get('user/emails', token=token)
         emails = emails_resp.json()
@@ -50,34 +59,23 @@ async def github_callback(request: Request):
             primary_email = next((e["email"] for e in emails if e.get("primary") and e.get("verified")), None)
             email = primary_email or emails[0]["email"]
 
-    # add user to the database
     if username and email:
         add_response = add_user(name=username, email=email, token=access_token)
 
-    # get the user ID
     user_id = add_response.get("id")
-
-    # create JWT tokens
-    ic("Creando tokens JWT para el usuario")
     access_token = create_access_token(data={"id": user_id, "name": username, "email": email})
     refresh_token = create_refresh_token(data={"id": user_id, "name": username, "email": email})
 
-
-    # Create response with specific headers
-    from fastapi.responses import JSONResponse
-    #response = JSONResponse(content={"redirect_url": f"{settings.FRONTEND_URL}/callback"})
     response = RedirectResponse(url=f"{settings.FRONTEND_URL}/callback")
-    
-    # Configurar las cookies con la configuración correcta
+
     cookie_settings = {
         "httponly": settings.HTTPONLY,
         "secure": settings.SECURE,
         "samesite": settings.SAMESITE,
-        "path": "/",  # Accesible en todas las rutas
+        "path": "/",
         "domain": settings.DOMAIN
     }
 
-    # Establecer cookies de autenticación
     response.set_cookie(
         key="access_token",
         value=f"Bearer {access_token}",
@@ -92,16 +90,21 @@ async def github_callback(request: Request):
         **cookie_settings
     )
 
-    # Agregar headers específicos para CORS
     response.headers["Access-Control-Allow-Credentials"] = "true"
     response.headers["Access-Control-Allow-Origin"] = settings.FRONTEND_URL
-    
-    ic("Respuesta preparada con cookies de autenticación")
+
     return response
 
 
 @router.post("/logout")
 def logout():
+    """
+    Cierra la sesión del usuario eliminando las cookies de autenticación.
+
+    📤 Retorna:
+        - Un mensaje JSON indicando que la sesión fue cerrada.
+        - Elimina las cookies 'access_token' y 'refresh_token'.
+    """
     response = JSONResponse(content={"message": "Sesión cerrada"})
     response.delete_cookie("access_token", domain=".a1devhub.tech")
     response.delete_cookie("refresh_token", domain=".a1devhub.tech")

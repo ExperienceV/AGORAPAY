@@ -1,6 +1,7 @@
 import httpx, os
 from dotenv import load_dotenv
 import requests
+import urllib
 
 load_dotenv()
 
@@ -33,7 +34,7 @@ async def get_access_token():
             raise
 
 
-async def create_order(amount: float, product_name: str):
+async def create_order(amount: float, product_name: str, seller_id: int, repo_url: str):
     print("\n=== INICIANDO CREACIÓN DE ORDEN EN PAYPAL_SERVICE ===")
     print(f"Monto: ${amount:.2f}")
     print(f"Producto: {product_name}")
@@ -46,6 +47,9 @@ async def create_order(amount: float, product_name: str):
     print(f"\nConfiguración:")
     print(f"API URL: {PAYPAL_API}")
     print(f"Backend URL: {backend_url}")
+
+    encoded_url = urllib.parse.quote(repo_url)
+
     
     async with httpx.AsyncClient() as client:
         try:
@@ -67,6 +71,8 @@ async def create_order(amount: float, product_name: str):
             
             print(f"\nDatos de la orden a crear:")
             print(f"Order data: {order_data}")
+
+
             
             print("\nEnviando solicitud de creación de orden a PayPal...")
             res = await client.post(
@@ -84,7 +90,7 @@ async def create_order(amount: float, product_name: str):
                     },
                     "description": product_name
                 }],                "application_context": {
-                    "return_url": f"{os.getenv('BACKEND_URL', 'https://agoserver.a1devhub.tech')}/success",
+                    "return_url": f"{os.getenv('BACKEND_URL', 'https://agoserver.a1devhub.tech')}/success?repo_name={product_name}&repo_url={encoded_url}&seller_id={seller_id}",
                     "cancel_url": f"{os.getenv('BACKEND_URL', 'https://agoserver.a1devhub.tech')}/cancel",
                     "user_action": "PAY_NOW"  # Hacer más clara la acción para el usuario
                 }

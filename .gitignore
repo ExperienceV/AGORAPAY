@@ -7,4 +7,7 @@ crypt_key.py
 /tests
 pytest.ini
 agora.config.yml
-play_tunnel.py
+launch_tunnels.py
+execute_app.py
+./tunnels/*
+/tunnels

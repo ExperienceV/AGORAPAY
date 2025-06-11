@@ -9,6 +9,11 @@ from pathlib import Path
 import zipfile
 from icecream import ic
 from typing import Optional
+from utils.download_upload import parse_github_repo_url
+from fastapi import HTTPException
+from database.queries.user import get_token_by_user
+from database.queries.repository import get_set_repositories, save_transfer_repo
+import uuid
 
 
 def download_github_repo(owner: str, repo: str, access_token: str, branch: str = "main") -> tuple[Path, Path]:
@@ -219,3 +224,95 @@ async def fetch_file_from_repo(
         return {"content": f"// Error al decodificar el archivo: {e}"}
 
 
+async def transfer_repository(
+    user: dict,
+    seller_id: int,
+    repo_name: str,
+    repo_url: str
+) -> dict:
+    """
+    Endpoint to transfer a repository from one user to another.
+    This endpoint allows a user to transfer a repository from a seller's GitHub account
+    """
+    ic("Inicializando transferencia de repositorio")
+    try:
+        ic("Recibiendo solicitud de transferencia de repositorio")
+
+        # Extract owner and repo name from the provided URL
+        ic("Analizando URL del repositorio:", repo_url)
+        owner, repo_name = parse_github_repo_url(repo_url)
+        ic("Owner:", owner, "Repo name:", repo_name)
+
+        # Get tokens for both seller and buyer
+        ic("Obteniendo tokens de GitHub para el vendedor y el comprador")
+        seller_token = get_token_by_user(user_id=seller_id)
+        buyer_token = get_token_by_user(user_id=user["id"])
+        ic("Tokens obtenidos:")
+        ic(f"Seller token: {'***' if seller_token else None}, Buyer token: {'***' if buyer_token else None}")
+
+        # Get repository information from the seller's account
+        ic("Obteniendo repositorios del vendedor con ID:", seller_id)
+        data_repo = get_set_repositories(
+            user_id=seller_id
+        )
+        ic("Repositorios del vendedor obtenidos:")
+        ic("Obteniendo repo_id del repositorio con URL:", repo_url)
+        repo_id = next(
+            (repo["repository_id"] for repo in data_repo if repo["url"] == repo_url),
+            None
+        )
+        ic("Repo ID encontrado:", repo_id)
+
+        # Download the repository from the seller's account
+        ic("Descargando repositorio del vendedor:", repo_name)
+        downloaded_path, temp_dir = download_github_repo(
+            owner=owner,
+            repo=repo_name,
+            access_token=seller_token
+        )
+        ic("Repositorio descargado en:", downloaded_path, "con directorio temporal:", temp_dir)
+
+        # Upload the repository to the buyer's account
+        unique_name = f"{uuid.uuid4()}-{repo_name}"
+        ic("Subiendo repositorio al GitHub del comprador con nombre:", unique_name)
+        new_repo_url = upload_repo_to_github(
+            local_repo_path=downloaded_path,
+            new_repo_name=unique_name,
+            github_token=buyer_token
+        )
+        ic("Repositorio subido con éxito. Nueva URL del repositorio:", new_repo_url)
+
+        # Save repo information in the database
+        ic("Guardando información del repositorio transferido en la base de datos")        # Get the branch from the seller's repository
+        source_repo = next(
+            (repo for repo in data_repo if repo["repository_id"] == repo_id),
+            None
+        )
+        if not source_repo:
+            raise Exception("Source repository not found")
+
+        transfer_response = save_transfer_repo(
+            user_id=user["id"],
+            repo_name=unique_name,
+            repo_url=new_repo_url,
+            seller_id=seller_id,
+            seller_repo_id=repo_id,
+            branch=source_repo.get("branch", "main")
+        )
+        ic("Respuesta de la base de datos al guardar la transferencia:", transfer_response)
+
+        ic("Transferencia de repositorio completada con éxito")
+        # Return success message with the new repository URL
+        return {
+            "message": "Repositorio transferido con éxito",
+            "repo_url": transfer_response
+        }
+
+    except HTTPException as http_exc:
+        ic("Excepción HTTP capturada durante la transferencia de repositorio:", http_exc.detail)
+        print(f"HTTPException: {http_exc.detail}")
+        raise http_exc
+    except Exception as e:
+        ic("Excepción inesperada durante la transferencia de repositorio:", str(e))
+        print(f"Exception: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
