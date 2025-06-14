@@ -1,5 +1,4 @@
 from config import Base, engine
-from models.user import User, Repository, user_purchased_repositories
 
 def recreate_database():
     print("Recreating database schema...")

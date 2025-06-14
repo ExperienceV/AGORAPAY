@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from utils.security.modules import auth_dependency
+from app.utils.security.modules import auth_dependency
 from fastapi.responses import JSONResponse
-from models import UploadModel
-from database.queries.user import get_token_by_user
-from database.queries.repository import set_repository, get_set_repositories, delete_repository
-from services.github_service import list_github_repositories
+from app.models import UploadModel
+from app.database.queries.user import get_token_by_user
+from app.database.queries.repository import set_repository, get_set_repositories, delete_repository
+from app.services.github_service import list_github_repositories
 
 router = APIRouter(tags=["repository"])
 
@@ -85,10 +85,12 @@ async def upload_repository(
 
         # Upload the repository using the service
         response = set_repository(
-            user_id=user_id,            
+            user_id=user_id,     
+            price=up_model.price,
             name_repository=up_model.name_repository,
             url_repository=up_model.url_repository,
-            branch=up_model.branch)
+            branch=up_model.branch
+        )
 
         if not response:
             return JSONResponse(

@@ -3,10 +3,11 @@ from pydantic import field_validator
 
 class Settings(BaseSettings):
     # COOKIE SETTINGS
-    SAMESITE: str = "strict"  # none para permitir cross-site
+    SAMESITE: str = "none"  # none para permitir cross-site
     HTTPONLY: bool = True   # True para seguridad
     SECURE: bool = True     # True para conexiones HTTPS
     FRONTEND_URL: str = "https://agorapay.a1devhub.tech"
+    BACKEND_URL: str = "https://agoserver.a1devhub.tech"
     DOMAIN: str = ".a1devhub.tech"
     
     # Configuración de CORS

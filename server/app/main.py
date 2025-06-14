@@ -2,9 +2,9 @@ from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from middlewares import TokenRefreshMiddleware
+from app.middlewares import TokenRefreshMiddleware
 from dotenv import load_dotenv
-from config import settings
+from app.config import settings
 
 app = FastAPI()
 load_dotenv()
@@ -25,12 +25,12 @@ app.add_middleware(
    secret_key=os.getenv("SESSION_SECRET_KEY")
 )
 
-from routers.github.auth import router as github_router
-from routers.menu.home import router as home_router
-from routers.auth import router as auth_router
-from routers.repository.repository import router as repository_router
-from routers.paypal.orders import router as paypal_router
-from routers.github.preview import app as preview_router
+from app.routers.github.auth import router as github_router
+from app.routers.menu.home import router as home_router
+from app.routers.auth import router as auth_router
+from app.routers.repository.repository import router as repository_router
+from app.routers.paypal.orders import router as paypal_router
+from app.routers.github.preview import app as preview_router
 
 routers = [
     github_router,

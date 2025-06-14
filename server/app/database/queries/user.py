@@ -1,8 +1,7 @@
 from sqlalchemy.orm import Session
-from database.config import Base, engine, SessionLocal
-from fastapi import Depends
-from database.models.user import User
-from utils.security.crypt_token import encrypt_token, decrypt_token
+from app.database.config import Base, engine, SessionLocal
+from app.database.models.user import User
+from app.utils.security.crypt_token import encrypt_token, decrypt_token
 from typing import Optional
 from icecream import ic
 ic("-- Iniciando el módulo de consultas de usuario --")

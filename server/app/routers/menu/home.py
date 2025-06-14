@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
-from utils.security.modules import auth_dependency
-from database.queries.user import get_user_data
-from database.queries.repository import get_set_repositories
+from fastapi.responses import  JSONResponse
+from app.utils.security.modules import auth_dependency
+from app.database.queries.user import get_user_data
+from app.database.queries.repository import get_set_repositories
 
 router = APIRouter(tags=["menu"])
 

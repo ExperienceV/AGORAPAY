@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Request, HTTPException, Depends, Form
-from services.paypal_service import create_order, capture_authorization, authorize_payment
-from utils.security.modules import auth_dependency
-from fastapi.responses import RedirectResponse
-from config import settings
-from models import ConfirmModel
-from services.github_service import transfer_repository
+from app.services.paypal_service import create_order, capture_authorization, authorize_payment
+from app.utils.security.modules import auth_dependency
+from fastapi.responses import RedirectResponse, JSONResponse
+from app.config import settings
+from app.services.github_service import transfer_repository
 
 
 router = APIRouter(tags=["paypal"])
@@ -14,7 +13,8 @@ router = APIRouter(tags=["paypal"])
 async def create_payment(
     repo_name: str, 
     seller_id: str,  
-    repo_url: str, 
+    repo_url: str,
+    repo_price: float, 
     request: Request,
     user: dict = Depends(auth_dependency)):
     """
@@ -35,6 +35,22 @@ async def create_payment(
     📤 Retorna:
         - RedirectResponse: Redirige a la URL de aprobación de PayPal o a la página de error en el frontend.
     """
+
+    print("Verificando si es un repositorio gratuito o de paga")
+    if not repo_price:
+        response_transfer = transfer_repository(
+            seller_id=seller_id,
+            repo_name=repo_name,
+            repo_url=repo_url
+        )
+
+        response_transfer["repo_name"] = repo_name
+
+        return JSONResponse(
+            content=repo_name,
+            status_code=200
+        )
+
     print("\n=== INICIANDO CREACIÓN DE ORDEN DE PAGO ===")
     print(f"Repositorio: {repo_name}")
     print(f"Headers de la solicitud: {dict(request.headers)}")

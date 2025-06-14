@@ -1,11 +1,7 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from authlib.integrations.starlette_client import OAuth
 from starlette.config import Config
-from starlette.responses import HTMLResponse, JSONResponse
-from config import settings
-from database.queries.user import add_user, get_id_with_username
-from pathlib import Path
-from utils.security.signature import create_access_token, create_refresh_token
+
 
 router = APIRouter(prefix="/auth/github", tags=["auth"])
 

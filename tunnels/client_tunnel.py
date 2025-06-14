@@ -4,8 +4,8 @@ def tunnel_start():
     try:
         comando = [
             'cloudflared', 'tunnel',
-            '--config', 'C:\\Users\\encry\\.cloudflared\\agora_client.config.yml',
-            'run', 'agora-client',
+            '--config', '/home/experiencev/.cloudflared/agora-client.config.yml',
+            'run', 'agoraClient',
         ]
         proceso = subprocess.Popen(comando)
         print("Túnel autenticado iniciado. Presiona Ctrl+C para detener.")

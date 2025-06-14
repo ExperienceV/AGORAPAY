@@ -5,7 +5,7 @@ from fastapi import HTTPException, status, Cookie, Request
 from typing import Optional
 from fastapi.security import HTTPBearer
 from icecream import ic
-from config import settings
+from app.config import settings
 
 # Esquema de autenticación Bearer
 security = HTTPBearer()

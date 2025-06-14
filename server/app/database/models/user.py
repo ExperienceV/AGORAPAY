@@ -1,6 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Table, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Table, Boolean, Float
 from sqlalchemy.orm import relationship
-from database.config import Base
+from app.database.config import Base
 from icecream import ic
 
 ic("Iniciando el módulo de modelos de usuario y repositorio")
@@ -22,6 +22,7 @@ class Repository(Base):
     name = Column(String)
     url = Column(String)
     branch = Column(String, default="main")  # New field for branch
+    price = Column(Float)
     uploader_id = Column(Integer, ForeignKey("users.id"))
 
     # Metadatos del vendedor

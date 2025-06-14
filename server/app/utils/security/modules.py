@@ -1,6 +1,6 @@
 from typing import Optional
 from fastapi import Cookie, Request
-from utils.security.signature import get_current_user
+from app.utils.security.signature import get_current_user
 from icecream import ic
 
 async def auth_dependency(

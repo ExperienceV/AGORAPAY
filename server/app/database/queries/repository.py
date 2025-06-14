@@ -1,6 +1,6 @@
-from database.config import Base, engine, SessionLocal
-from database.models.user import User
-from database.models.user import Repository
+from app.database.config import Base, engine, SessionLocal
+from app.database.models.user import User
+from app.database.models.user import Repository
 from typing import Optional
 from icecream import ic
 ic("-- Iniciando el módulo de consultas de repositorios --")
@@ -18,7 +18,7 @@ def get_db():
 
 # Asociar un repositorio como subido por el usuario
 ic("Definiendo la función set_repository para asociar un repositorio subido por el usuario")
-def set_repository(user_id: int, name_repository: str, url_repository: str, branch: str = "main"):
+def set_repository(user_id: int, name_repository: str, url_repository: str, price: float = 0.0, branch: str = "main"):
     db = get_db()
     try:
         ic("Iniciando la transacción para subir el repositorio")
@@ -28,7 +28,13 @@ def set_repository(user_id: int, name_repository: str, url_repository: str, bran
 
         # Crear el objeto repositorio dentro de la función
         ic("Creando el objeto Repository con los datos proporcionados")
-        repo = Repository(name=name_repository, url=url_repository, branch=branch, uploader_id=user_id)
+        repo = Repository(
+            name=name_repository, 
+            url=url_repository, 
+            branch=branch,
+            price=price, 
+            uploader_id=user_id
+            )
         # Asociar el repositorio al usuario
         ic("Asociando el repositorio al usuario con ID:", user_id)
         db.add(repo)

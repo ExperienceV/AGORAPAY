@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
-from utils.security.modules import auth_dependency
+from app.utils.security.modules import auth_dependency
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

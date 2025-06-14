@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
-from services.github_service import search_repo_tree, fetch_file_from_repo
-from database.queries.user import get_token_by_user
+from app.services.github_service import search_repo_tree, fetch_file_from_repo
+from app.database.queries.user import get_token_by_user
 
 app = APIRouter(tags=["views"])
 

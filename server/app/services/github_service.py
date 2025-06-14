@@ -9,10 +9,10 @@ from pathlib import Path
 import zipfile
 from icecream import ic
 from typing import Optional
-from utils.download_upload import parse_github_repo_url
+from app.utils.download_upload import parse_github_repo_url
 from fastapi import HTTPException
-from database.queries.user import get_token_by_user
-from database.queries.repository import get_set_repositories, save_transfer_repo
+from app.database.queries.user import get_token_by_user
+from app.database.queries.repository import get_set_repositories, save_transfer_repo
 import uuid
 
 

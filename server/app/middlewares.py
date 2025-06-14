@@ -1,7 +1,7 @@
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
-from config import settings
+from app.config import settings
 from icecream import ic
 
 # Middleware to refresh the access token

@@ -1,11 +1,9 @@
-from fastapi import APIRouter, Request, Depends, status
-from services.auth_service import register_github_oauth
-from starlette.responses import RedirectResponse, Response, JSONResponse
-from config import settings
-from utils.security.modules import auth_dependency
-from database.queries.user import add_user
-from pathlib import Path
-from utils.security.signature import create_access_token, create_refresh_token
+from fastapi import APIRouter, Request
+from app.services.auth_service import register_github_oauth
+from starlette.responses import RedirectResponse, JSONResponse
+from app.config import settings
+from app.database.queries.user import add_user
+from app.utils.security.signature import create_access_token, create_refresh_token
 
 router = APIRouter(prefix="/auth/github", tags=["github"])
 
@@ -21,7 +19,7 @@ async def login_with_github(request: Request):
         - Una redirección al endpoint de autorización de GitHub.
     """
     oauth = register_github_oauth()
-    redirect_uri = request.url_for('github_callback')
+    redirect_uri = f"{settings.BACKEND_URL}/auth/github/callback"
     return await oauth.github.authorize_redirect(request, redirect_uri)
 
 
