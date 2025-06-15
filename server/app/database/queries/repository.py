@@ -81,9 +81,11 @@ def get_set_repositories(
     ic("Convirtiendo los repositorios a un formato serializable")
     return [
         {
-            "uploader_id": repo.uploader_id,            "repository_id": repo.id,
+            "uploader_id": repo.uploader_id,            
+            "repository_id": repo.id,
             "name": repo.name,
             "url": repo.url,
+            "price": repo.price,
             "branch": repo.branch,
             "is_transfer": repo.is_transfer
         } for repo in repos

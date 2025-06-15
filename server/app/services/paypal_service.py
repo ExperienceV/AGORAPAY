@@ -120,6 +120,7 @@ async def authorize_payment(order_id):
 
 async def capture_authorization(authorization_id: str):
     token = await get_access_token()
+    print("Generando captura con el token")
     async with httpx.AsyncClient() as client:
         res = await client.post(
             f"{PAYPAL_API}/v2/payments/authorizations/{authorization_id}/capture",
@@ -128,4 +129,6 @@ async def capture_authorization(authorization_id: str):
                 "Authorization": f"Bearer {token}",
             }
         )
-        return res.json()
+        response = res.json()
+        print(f"Devolviendo respuesta: {response}")
+        return response

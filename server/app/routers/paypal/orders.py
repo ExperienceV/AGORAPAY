@@ -14,7 +14,7 @@ async def create_payment(
     repo_name: str, 
     seller_id: str,  
     repo_url: str,
-    repo_price: float, 
+    repo_price: int, 
     request: Request,
     user: dict = Depends(auth_dependency)):
     """
@@ -59,7 +59,7 @@ async def create_payment(
         print("Creando orden en PayPal...")
         # Crear la orden con PayPal
         order = await create_order(
-            amount=110.00,
+            amount=float(repo_price),
             product_name=repo_name,
             repo_url=repo_url,
             seller_id=seller_id
@@ -203,6 +203,12 @@ async def confirm(
         - HTTPException 400 si falta authorization_id.
         - HTTPException 500 si falla la captura del pago.
     """
+
+    print("Recibiendo datos de confirmacion:")
+    print(authorization_id)
+    print(repo_url)
+    print(repo_name)
+    print(seller_id)
     if not authorization_id:
         raise HTTPException(status_code=400, detail="Falta el authorization_id")
 
@@ -212,19 +218,26 @@ async def confirm(
         raise HTTPException(status_code=500, detail=f"Error al capturar: {str(e)}")
     
 
-    seller_id = int(seller_id)
-    # Logica para transferir repositorio
-    transfer_response = await transfer_repository(
-        user=user,
-        seller_id=seller_id,
-        repo_name=repo_name,
-        repo_url=repo_url
+    try:
+        seller_id = int(seller_id)
+        # Logica para transferir repositorio
+        
+        transfer_response = await transfer_repository(
+            user=user,
+            seller_id=seller_id,
+            repo_name=repo_name,
+            repo_url=repo_url
 
-    )
+        )
 
-    print(transfer_response)
+        print(transfer_response)
 
-    return {"status": "capturado", "paypal_response": result}
+        return {"status": "capturado", "paypal_response": result}
+    except HTTPException as http_exc:
+        return JSONResponse(
+            status_code=http_exc.status_code,
+            content={"detail": http_exc.detail}
+        )
 
 
 @router.get("/cancel")
