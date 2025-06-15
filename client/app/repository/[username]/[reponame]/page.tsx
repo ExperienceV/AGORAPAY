@@ -378,9 +378,9 @@ export default function RepositoryPreviewPage() {
           },
         )
 
+        const data = await response.json()
+        console.log(data)
         if (response.ok) {
-          const data = await response.json()
-
           // Verificar si la respuesta es JSON (repositorio gratuito)
           if (typeof data === "object" && data.message) {
             toast({
