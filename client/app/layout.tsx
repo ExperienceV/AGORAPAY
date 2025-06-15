@@ -9,7 +9,12 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "AgoraPay - Marketplace de Repositorios",
   description: "Compra y vende repositorios de código de forma segura",
-    generator: 'v0.dev'
+  generator: 'v0.dev',
+  icons: {
+    icon: '/logo.ico',
+    shortcut: '/logo.ico',
+    apple: '/logo.ico'
+  }
 }
 
 export default function RootLayout({
