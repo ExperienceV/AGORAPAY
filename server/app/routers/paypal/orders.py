@@ -38,7 +38,8 @@ async def create_payment(
 
     print("Verificando si es un repositorio gratuito o de paga")
     if not repo_price:
-        response_transfer = transfer_repository(
+        response_transfer = await transfer_repository(
+            user=user,
             seller_id=seller_id,
             repo_name=repo_name,
             repo_url=repo_url
@@ -47,7 +48,7 @@ async def create_payment(
         response_transfer["repo_name"] = repo_name
 
         return JSONResponse(
-            content=repo_name,
+            content=response_transfer,
             status_code=200
         )
 

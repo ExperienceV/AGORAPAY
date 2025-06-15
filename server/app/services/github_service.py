@@ -273,7 +273,7 @@ async def transfer_repository(
         ic("Repositorio descargado en:", downloaded_path, "con directorio temporal:", temp_dir)
 
         # Upload the repository to the buyer's account
-        unique_name = f"{uuid.uuid4()}-{repo_name}"
+        unique_name = f"AgoraPay-{repo_name}"
         ic("Subiendo repositorio al GitHub del comprador con nombre:", unique_name)
         new_repo_url = upload_repo_to_github(
             local_repo_path=downloaded_path,

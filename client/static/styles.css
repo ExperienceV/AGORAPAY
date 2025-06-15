@@ -1,0 +1,184 @@
+:root {
+  --primary: #0A84FF;
+  --secondary: #30D158;
+  --background: #000000;
+  --card-bg: #1C1C1E;
+  --text-primary: #FFFFFF;
+  --text-secondary: #98989F;
+  --border-color: #38383A;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.card {
+  background-color: var(--card-bg);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(20px);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary), #64D2FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.input-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+input {
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+button {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
+}
+
+button.secondary {
+  background-color: var(--secondary);
+}
+
+.repo-list {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.repo-item {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.repo-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.repo-info h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.repo-info a {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+  display: inline-block;
+}
+
+.repo-info a:hover {
+  text-decoration: underline;
+}
+
+.user-info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 1rem;
+  align-items: center;
+}
+
+.user-info strong {
+  color: var(--text-secondary);
+}
+
+.search-result {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.github-repos button {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.github-repos button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.repo-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.delete-btn {
+  background-color: #FF453A !important;
+  padding: 0.5rem 1rem !important;
+}
+
+.delete-btn:hover {
+  background-color: #FF594F !important;
+  box-shadow: 0 4px 12px rgba(255, 69, 58, 0.3) !important;
+}

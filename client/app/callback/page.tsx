@@ -1,76 +1,38 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle, AlertCircle, Loader2 } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { CheckCircle, Loader2 } from "lucide-react"
 
 export default function CallbackPage() {
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
-  const [message, setMessage] = useState("")
   const router = useRouter()
 
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
-        const res = await fetch("https://agoserver.a1devhub.tech/auth/verify_user", {
-          credentials: "include",
-        })
+    // Simular un pequeño delay para mostrar la animación
+    const timer = setTimeout(() => {
+      router.push("/dashboard")
+    }, 2000)
 
-        if (res.status === 200) {
-          setStatus("success")
-          setMessage("Autenticación exitosa. Redirigiendo al dashboard...")
-
-          setTimeout(() => {
-            router.push("/dashboard")
-          }, 2000)
-        } else {
-          setStatus("error")
-          setMessage("Error en la autenticación. No se pudieron verificar las credenciales.")
-        }
-      } catch (error) {
-        setStatus("error")
-        setMessage("Error inesperado durante la autenticación.")
-        console.error("Callback error:", error)
-      }
-    }
-
-    handleCallback()
+    return () => clearTimeout(timer)
   }, [router])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
-      <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-700/50 shadow-2xl w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl text-white">Procesando Autenticación</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center space-y-4">
-          {status === "loading" && (
-            <>
-              <Loader2 className="w-12 h-12 mx-auto text-blue-500 animate-spin" />
-              <p className="text-gray-400">Verificando credenciales...</p>
-            </>
-          )}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+      <Card className="bg-black/40 backdrop-blur-xl border-white/10 shadow-2xl max-w-md w-full">
+        <CardContent className="p-8 text-center">
+          <div className="mb-6">
+            <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <CheckCircle className="w-10 h-10 text-green-400" />
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2">¡Autenticación Exitosa!</h1>
+            <p className="text-gray-400">Redirigiendo a tu dashboard...</p>
+          </div>
 
-          {status === "success" && (
-            <>
-              <CheckCircle className="w-12 h-12 mx-auto text-green-500" />
-              <p className="text-green-400">{message}</p>
-            </>
-          )}
-
-          {status === "error" && (
-            <>
-              <AlertCircle className="w-12 h-12 mx-auto text-red-500" />
-              <p className="text-red-400">{message}</p>
-              <button
-                onClick={() => router.push("/")}
-                className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-              >
-                Volver al inicio
-              </button>
-            </>
-          )}
+          <div className="flex items-center justify-center space-x-2 text-gray-400">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Cargando...</span>
+          </div>
         </CardContent>
       </Card>
     </div>

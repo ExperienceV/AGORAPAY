@@ -2,120 +2,93 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Loader2, AlertCircle, CreditCard } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CheckCircle, XCircle, Loader2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+
+const BACKEND_URL = "https://agoserver.a1devhub.tech"
 
 export default function SuccessPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const [authorizationId, setAuthorizationId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isConfirming, setIsConfirming] = useState(false)
+  const { toast } = useToast()
+  const [processing, setProcessing] = useState(false)
+  const [completed, setCompleted] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isConfirmed, setIsConfirmed] = useState(false)
+
+  const authorizationId = searchParams.get("authorization_id")
+  const sellerId = searchParams.get("seller_id")
+  const repoUrl = searchParams.get("repo_url")
+  const repoName = searchParams.get("repo_name")
+  const errorParam = searchParams.get("error")
 
   useEffect(() => {
-    const id = searchParams.get("authorization_id")
-    if (id) {
-      setAuthorizationId(id)
-      setIsLoading(false)
-    } else {
-      setError("No se encontró el ID de autorización")
-      setIsLoading(false)
+    if (errorParam) {
+      setError(errorParam)
+      return
     }
-  }, [searchParams])
 
-  // Modificar la función confirmPurchase para incluir los datos adicionales
-  const confirmPurchase = async () => {
-    if (!authorizationId) return
+    if (authorizationId && sellerId && repoUrl && repoName) {
+      confirmPayment()
+    }
+  }, [authorizationId, sellerId, repoUrl, repoName, errorParam])
 
-    setIsConfirming(true)
+  const confirmPayment = async () => {
+    setProcessing(true)
+
     try {
-      // Obtener los parámetros de la URL para el repositorio y vendedor
-      const sellerId = searchParams.get("seller_id")
-      const repoName = searchParams.get("repo_name")
-      const repoUrl = searchParams.get("repo_url")
+      const formData = new FormData()
+      formData.append("authorization_id", authorizationId!)
+      formData.append("seller_id", sellerId!)
+      formData.append("repo_url", repoUrl!)
+      formData.append("repo_name", repoName!)
 
-      const json_rqst = {
-          authorization_id: authorizationId,
-          seller_id: sellerId,
-          repo_name: repoName,
-          repo_url: repoUrl
-        }
-
-
-      console.log("Datos para enviar:")
-      console.log(json_rqst)
-
-      // Verificar que tenemos todos los datos necesarios
-      if (!sellerId || !repoName || !repoUrl) {
-        setError("Faltan datos necesarios para completar la compra")
-        setIsConfirming(false)
-        return
-      }
-
-      const sellerIdInt = parseInt(sellerId);
-      console.log(typeof sellerIdInt); // debe mostrar "number"
-
-      const formData = new FormData();
-      formData.append("authorization_id", authorizationId);
-      formData.append("seller_id", sellerIdInt.toString());
-      formData.append("repo_name", repoName);
-      formData.append("repo_url", repoUrl);
-
-      console.log("FormData:");
-      for (let pair of formData.entries()) {
-        console.log(`${pair[0]}: ${pair[1]}`);
-      }
-
-      const response = await fetch("https://agoserver.a1devhub.tech/confirm", {
+      const response = await fetch(`${BACKEND_URL}/confirm`, {
         method: "POST",
-        body: formData,
         credentials: "include",
-      });
-
+        body: formData,
+      })
 
       if (response.ok) {
-        const result = await response.json()
-        setIsConfirmed(true)
-        setTimeout(() => {
-          router.push("/dashboard")
-        }, 3000)
+        const data = await response.json()
+        setCompleted(true)
+        toast({
+          title: "¡Pago Exitoso!",
+          description: "El repositorio ha sido transferido a tu cuenta",
+        })
       } else {
-        setError("Error al confirmar la compra")
+        throw new Error("Error al confirmar el pago")
       }
-    } catch (err) {
-      setError("Error de conexión al confirmar la compra")
+    } catch (error) {
+      setError("Error al procesar el pago")
+      toast({
+        title: "Error",
+        description: "No se pudo completar la transacción",
+        variant: "destructive",
+      })
     } finally {
-      setIsConfirming(false)
+      setProcessing(false)
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
-        <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-700/50 shadow-2xl w-full max-w-md">
-          <CardContent className="text-center py-8">
-            <Loader2 className="w-12 h-12 mx-auto text-blue-500 animate-spin mb-4" />
-            <p className="text-gray-400">Procesando autorización...</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
+  const goToDashboard = () => {
+    router.push("/dashboard")
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
-        <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-700/50 shadow-2xl w-full max-w-md">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+        <Card className="bg-black/40 backdrop-blur-xl border-white/10 shadow-2xl max-w-md w-full">
           <CardHeader className="text-center">
-            <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
-            <CardTitle className="text-xl text-white">Error en el Pago</CardTitle>
+            <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <XCircle className="w-10 h-10 text-red-400" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-white">Error en el Pago</CardTitle>
+            <CardDescription className="text-gray-400">{error}</CardDescription>
           </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-red-400">{error}</p>
-            <Button onClick={() => router.push("/dashboard")} className="w-full bg-blue-600 hover:bg-blue-700">
+          <CardContent className="text-center">
+            <Button onClick={goToDashboard} className="w-full">
               Volver al Dashboard
             </Button>
           </CardContent>
@@ -124,19 +97,24 @@ export default function SuccessPage() {
     )
   }
 
-  if (isConfirmed) {
+  if (processing) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
-        <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-700/50 shadow-2xl w-full max-w-md">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+        <Card className="bg-black/40 backdrop-blur-xl border-white/10 shadow-2xl max-w-md w-full">
           <CardHeader className="text-center">
-            <CheckCircle className="w-16 h-16 mx-auto text-green-500 mb-4" />
-            <CardTitle className="text-xl text-white">¡Compra Confirmada!</CardTitle>
+            <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <Loader2 className="w-10 h-10 text-blue-400 animate-spin" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-white">Procesando Pago</CardTitle>
+            <CardDescription className="text-gray-400">
+              Confirmando la transacción y transfiriendo el repositorio...
+            </CardDescription>
           </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-green-400">Tu repositorio ha sido transferido exitosamente.</p>
-            <p className="text-gray-400">Redirigiendo al dashboard...</p>
-            <div className="w-full bg-gray-700 rounded-full h-2">
-              <div className="bg-green-500 h-2 rounded-full animate-pulse" style={{ width: "100%" }}></div>
+          <CardContent className="text-center">
+            <div className="space-y-2 text-sm text-gray-400">
+              <p>• Verificando pago con PayPal</p>
+              <p>• Clonando repositorio</p>
+              <p>• Transfiriendo a tu cuenta</p>
             </div>
           </CardContent>
         </Card>
@@ -144,49 +122,46 @@ export default function SuccessPage() {
     )
   }
 
+  if (completed) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+        <Card className="bg-black/40 backdrop-blur-xl border-white/10 shadow-2xl max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <CheckCircle className="w-10 h-10 text-green-400" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-white">¡Compra Exitosa!</CardTitle>
+            <CardDescription className="text-gray-400">
+              El repositorio "{repoName}" ha sido transferido a tu cuenta de GitHub
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+              <h3 className="text-green-400 font-medium mb-2">¿Qué sigue?</h3>
+              <ul className="text-sm text-gray-300 space-y-1">
+                <li>• El repositorio ya está en tu cuenta de GitHub</li>
+                <li>• Puedes clonarlo y comenzar a trabajar</li>
+                <li>• Revisa tu dashboard para más detalles</li>
+              </ul>
+            </div>
+            <Button onClick={goToDashboard} className="w-full">
+              Ir al Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
-      <Card className="bg-gray-900/50 backdrop-blur-xl border-gray-700/50 shadow-2xl w-full max-w-md">
-        <CardHeader className="text-center">
-          <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-4" />
-          <CardTitle className="text-xl text-white">Pago Autorizado Correctamente</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center space-y-6">
-          <p className="text-gray-400">
-            Ahora puedes confirmar la compra para completar la transferencia del repositorio.
-          </p>
-
-          <div className="p-4 bg-gray-800/50 rounded-lg">
-            <p className="text-sm text-gray-400 mb-2">ID de Autorización:</p>
-            <p className="text-blue-400 font-mono text-xs break-all">{authorizationId}</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+      <Card className="bg-black/40 backdrop-blur-xl border-white/10 shadow-2xl max-w-md w-full">
+        <CardContent className="p-8 text-center">
+          <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Loader2 className="w-10 h-10 text-blue-400 animate-spin" />
           </div>
-
-          <Button
-            onClick={confirmPurchase}
-            disabled={isConfirming}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-xl transition-all duration-200"
-            size="lg"
-          >
-            {isConfirming ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Confirmando...
-              </>
-            ) : (
-              <>
-                <CreditCard className="w-5 h-5 mr-2" />
-                Confirmar Compra
-              </>
-            )}
-          </Button>
-
-          <Button
-            onClick={() => router.push("/dashboard")}
-            variant="outline"
-            className="w-full border-gray-600 text-gray-300 hover:bg-gray-700"
-          >
-            Cancelar y Volver
-          </Button>
+          <h1 className="text-2xl font-bold text-white mb-2">Cargando...</h1>
+          <p className="text-gray-400">Procesando información del pago</p>
         </CardContent>
       </Card>
     </div>

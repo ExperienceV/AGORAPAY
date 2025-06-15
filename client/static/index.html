@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AgoraDevs - Plataforma de Repositorios</title>
+  <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Usuario actual -->
+    <div class="card">
+      <div class="card-header">
+        <h1 class="title">Panel de Usuario</h1>
+      </div>
+      <div class="user-info">
+        <strong>Nombre:</strong>
+        <span id="username"></span>
+        <strong>Email:</strong>
+        <span id="email"></span>
+      </div>
+    </div>
+
+    <!-- Barra de búsqueda -->
+    <div class="card">
+      <h2 class="subtitle">Buscar Usuario</h2>
+      <div class="input-group">
+        <input id="search" type="text" placeholder="Username o Email"/>
+        <button onclick="buscarUsuario()">Buscar</button>
+      </div>
+      <div id="resultadoBusqueda" class="search-result"></div>
+    </div>
+
+    <!-- Repositorios -->
+    <div class="card">
+      <h2 class="subtitle">Mis Repositorios</h2>
+      <ul id="repositorios" class="repo-list"></ul>
+    </div>
+
+    <!-- Transferencias -->
+    <div class="card">
+      <h2 class="subtitle">Repositorios Transferidos</h2>
+      <ul id="transferencias" class="repo-list"></ul>
+    </div>
+
+    <!-- Subir repositorio -->
+    <div class="card">
+      <h2 class="subtitle">Subir Repositorio</h2>
+      <button onclick="cargarReposGitHub()" class="secondary">Cargar Repositorios de GitHub</button>
+      <div id="reposGitHub" class="github-repos"></div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchWithCookies(url, options = {}) {
+      return fetch(url, { ...options, credentials: 'include' });
+    }
+
+    async function cargarUsuarioActual() {
+      const res = await fetchWithCookies('/get_user_info');
+      const data = await res.json();
+      document.getElementById('username').textContent = data.user.profile.username;
+      document.getElementById('email').textContent = data.user.profile.email;
+      renderRepos(data.user.repositories, 'repositorios');
+      renderRepos(data.user.transfer_repository, 'transferencias');
+    }
+
+    async function borrarRepositorio(repoId) {
+      if (!confirm('¿Estás seguro de que deseas eliminar este repositorio?')) {
+        return;
+      }
+
+      try {
+        const response = await fetchWithCookies(`/delete_repository/${repoId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+          alert('Repositorio eliminado correctamente.');
+          cargarUsuarioActual(); // Recargar la lista de repositorios
+        } else {
+          const data = await response.json();
+          alert(`Error al eliminar el repositorio: ${data.detail}`);
+        }
+      } catch (error) {
+        alert('Error al eliminar el repositorio');
+        console.error('Error:', error);
+      }
+    }
+
+    function renderRepos(repos, containerId, permitirObtener = false, sellerId = null) {
+      const contenedor = document.getElementById(containerId);
+      contenedor.innerHTML = '';
+
+      if (!repos || repos.length === 0) {
+        contenedor.innerHTML = '<p class="text-secondary">Sin repositorios.</p>';
+        return;
+      }
+
+      repos.forEach(repo => {
+        const item = document.createElement('li');
+        item.className = 'repo-item';        item.innerHTML = `
+          <div class="repo-info">
+            <h3>${repo.name}</h3>
+            <a href="${repo.url}" target="_blank">${repo.url}</a>
+            <p>Rama: ${repo.branch || 'main'}</p>
+          </div>
+          <div class="repo-actions">
+          </div>
+        `;
+        
+        const actionsDiv = item.querySelector('.repo-actions');
+
+        // Si es la lista de "Mis Repositorios", mostrar botón de eliminar
+        if (containerId === 'repositorios') {
+          const deleteBtn = document.createElement('button');
+          deleteBtn.textContent = 'Eliminar';
+          deleteBtn.className = 'delete-btn';
+          deleteBtn.onclick = () => borrarRepositorio(repo.repository_id);
+          actionsDiv.appendChild(deleteBtn);
+        }
+
+        // Si es la lista de búsqueda, mostrar botón de obtener
+        if (permitirObtener) {
+          const btn = document.createElement('button');
+          btn.textContent = 'Obtener';
+          btn.onclick = () => obtenerRepositorio(repo, sellerId);
+          actionsDiv.appendChild(btn);
+        }
+
+        contenedor.appendChild(item);
+      });
+    }
+
+    async function buscarUsuario() {
+      const valor = document.getElementById('search').value.trim();
+      if (!valor) return;
+
+      const esEmail = valor.includes('@');
+      const query = esEmail ? `email=${valor}` : `username=${valor}`;
+      const res = await fetchWithCookies(`/get_user_info?${query}`);
+      const data = await res.json();
+
+      const contenedor = document.getElementById('resultadoBusqueda');
+      contenedor.innerHTML = `
+        <div class="user-info">
+          <strong>Nombre:</strong>
+          <span>${data.user.profile.username}</span>
+          <strong>Email:</strong>
+          <span>${data.user.profile.email}</span>
+        </div>
+        <h3 class="subtitle">Repositorios Disponibles</h3>
+        <ul id="reposBuscados" class="repo-list"></ul>
+      `;
+
+      renderRepos(data.user.repositories, 'reposBuscados', true, data.user.profile.id);
+    }
+
+    async function cargarReposGitHub() {
+      const res = await fetchWithCookies('/get_github_repositories');
+      const repos = await res.json();
+
+      const contenedor = document.getElementById('reposGitHub');
+      contenedor.innerHTML = '';      repos.forEach(repo => {
+        const btn = document.createElement('button');
+        btn.textContent = `${repo.nombre} (${repo.visibilidad})`;
+        btn.className = 'block w-full text-left px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded';
+        btn.onclick = () => subirRepositorio(repo.nombre, repo.url, repo.default_branch || "main");
+        contenedor.appendChild(btn);
+      });
+    }    async function subirRepositorio(nombre, url, branch) {
+      await fetchWithCookies('/upload_repository', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name_repository: nombre,
+          url_repository: url,
+          branch: branch
+        })
+      });
+      alert('Repositorio subido.');
+      cargarUsuarioActual();
+    }
+
+    async function obtenerRepositorio(repo, sellerId) {
+      await fetchWithCookies('/transfer_repository', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          seller_id: sellerId,
+          repo_url: repo.url,
+          repo_name: repo.name
+        })
+      });
+      alert('Repositorio obtenido.');
+      cargarUsuarioActual();
+    }
+
+    cargarUsuarioActual();
+  </script>
+</body>
+</html>
