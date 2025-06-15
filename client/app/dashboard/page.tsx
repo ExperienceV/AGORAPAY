@@ -367,7 +367,11 @@ export default function DashboardPage() {
                           </a>
                         </div>
                         <div className="flex items-center space-x-2">
-                          {repo.price && <Badge variant="secondary">${repo.price}</Badge>}
+                          {repo.price === 0 ? (
+                            <Badge className="bg-green-500/20 text-green-300 border-green-500/30">Gratis</Badge>
+                          ) : (
+                            <Badge variant="secondary">${repo.price}</Badge>
+                          )}
                           <Button variant="destructive" size="sm" onClick={() => deleteRepository(repo.repository_id)}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
