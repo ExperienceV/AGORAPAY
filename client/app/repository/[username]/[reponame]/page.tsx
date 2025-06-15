@@ -286,24 +286,62 @@ export default function RepositoryPreviewPage() {
 
   const fetchRepoTree = async (branch = "main") => {
     try {
-      const response = await fetch(`${BACKEND_URL}/tree?repository=${reponame}&username=${username}&branch=${branch}`, {
-        credentials: "include",
-      })
+      // Check if this is octocat's Hello-World repository
+      if (username === "octocat" && reponame === "Hello-World") {
+        // Use GitHub API directly for public repository
+        const response = await fetch(`https://api.github.com/repos/octocat/Hello-World/git/trees/master?recursive=1`)
 
-      if (response.ok) {
-        const data = await response.json()
-        setRepoTree(data)
-        setFileTree(buildFileTree(data.tree || []))
+        if (response.ok) {
+          const data = await response.json()
+          // Transform GitHub API response to match our expected format
+          const transformedData = {
+            tree: data.tree.map((item: any) => ({
+              path: item.path,
+              type: item.type === "blob" ? "blob" : "tree",
+              size: item.size,
+              url: item.url,
+            })),
+            truncated: data.truncated,
+          }
 
-        // Auto-select README if exists
-        const readmeFile = data.tree?.find(
-          (file: FileNode) =>
-            file.type === "blob" &&
-            (file.path.toLowerCase().includes("readme") || file.path.toLowerCase().includes("index")),
+          setRepoTree(transformedData)
+          setFileTree(buildFileTree(transformedData.tree || []))
+
+          // Auto-select README if exists
+          const readmeFile = transformedData.tree?.find(
+            (file: FileNode) =>
+              file.type === "blob" &&
+              (file.path.toLowerCase().includes("readme") || file.path.toLowerCase().includes("index")),
+          )
+
+          if (readmeFile) {
+            openFile(readmeFile.path)
+          }
+        }
+      } else {
+        // Use backend for other repositories
+        const response = await fetch(
+          `${BACKEND_URL}/tree?repository=${reponame}&username=${username}&branch=${branch}`,
+          {
+            credentials: "include",
+          },
         )
 
-        if (readmeFile) {
-          openFile(readmeFile.path)
+        if (response.ok) {
+          const data = await response.json()
+          setRepoTree(data)
+          setFileTree(buildFileTree(data.tree || []))
+
+          // Auto-select README if exists
+          const readmeFile = data.tree?.find(
+            (file: FileNode) =>
+              file.type === "blob" &&
+              (file.path.toLowerCase().includes("readme") || file.path.toLowerCase().includes("index")),
+          )
+
+          if (readmeFile) {
+            openFile(readmeFile.path)
+          }
         }
       }
     } catch (error) {
@@ -337,21 +375,42 @@ export default function RepositoryPreviewPage() {
     setFileLoading(true)
 
     try {
-      const response = await fetch(
-        `${BACKEND_URL}/file?path=${encodeURIComponent(path)}&owner=${username}&repo=${reponame}`,
-        {
-          credentials: "include",
-        },
-      )
+      let content = ""
 
-      if (response.ok) {
-        const data = await response.json()
-        const content = data.content || "// No se pudo cargar el contenido del archivo"
+      // Check if this is octocat's Hello-World repository
+      if (username === "octocat" && reponame === "Hello-World") {
+        // Use GitHub API directly for public repository
+        const response = await fetch(
+          `https://api.github.com/repos/octocat/Hello-World/contents/${encodeURIComponent(path)}`,
+        )
 
-        // Guardar en caché
-        fileCache.current.set(path, content)
-        setFileContent(content)
+        if (response.ok) {
+          const data = await response.json()
+          // GitHub API returns base64 encoded content for files
+          if (data.content) {
+            content = atob(data.content.replace(/\n/g, ""))
+          } else {
+            content = "// No se pudo cargar el contenido del archivo"
+          }
+        }
+      } else {
+        // Use backend for other repositories
+        const response = await fetch(
+          `${BACKEND_URL}/file?path=${encodeURIComponent(path)}&owner=${username}&repo=${reponame}`,
+          {
+            credentials: "include",
+          },
+        )
+
+        if (response.ok) {
+          const data = await response.json()
+          content = data.content || "// No se pudo cargar el contenido del archivo"
+        }
       }
+
+      // Guardar en caché
+      fileCache.current.set(path, content)
+      setFileContent(content)
     } catch (error) {
       const errorMsg = "// Error al cargar el archivo"
       fileCache.current.set(path, errorMsg)
