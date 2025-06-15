@@ -59,23 +59,13 @@ export default function MarketplacePage() {
       const mockRepos: Repository[] = [
         {
           repository_id: 1,
-          name: "react-dashboard",
-          url: "https://github.com/user1/react-dashboard",
+          name: "hello-world",
+          url: "https://github.com/octocat/hello-world",
           branch: "main",
           uploader_id: 1,
-          price: 29.99,
-          owner: { id: 1, username: "user1", email: "user1@example.com" },
-        },
-        {
-          repository_id: 2,
-          name: "node-api-starter",
-          url: "https://github.com/user2/node-api-starter",
-          branch: "main",
-          uploader_id: 2,
           price: 0,
-          owner: { id: 2, username: "user2", email: "user2@example.com" },
+          owner: { id: 1, username: "octocat", email: "octocat@github.com" },
         },
-        // Más repositorios...
       ]
 
       setRepositories(mockRepos)
