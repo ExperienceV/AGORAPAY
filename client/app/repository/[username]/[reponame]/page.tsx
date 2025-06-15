@@ -378,9 +378,9 @@ export default function RepositoryPreviewPage() {
           },
         )
 
-        const data = await response.json()
-        console.log(data)
         if (response.ok) {
+          const data = await response.json()
+
           // Verificar si la respuesta es JSON (repositorio gratuito)
           if (typeof data === "object" && data.message) {
             toast({
@@ -397,6 +397,35 @@ export default function RepositoryPreviewPage() {
             window.location.href = `${BACKEND_URL}/create-order/${repository.name}?seller_id=${owner.id}&repo_url=${encodeURIComponent(repository.url)}&repo_price=${price}`
           }
         } else {
+          // Handle specific error cases
+          const errorData = await response.json().catch(() => ({}))
+
+          // Check if it's a repository name conflict error
+          if (
+            response.status === 422 ||
+            (errorData.detail && errorData.detail.includes("name already exists on this account"))
+          ) {
+            toast({
+              title: "Repositorio ya existe",
+              description:
+                "Ya tienes un repositorio con este nombre en tu cuenta de GitHub. Por favor, renombra o elimina el repositorio existente antes de continuar.",
+              variant: "destructive",
+            })
+            return
+          }
+
+          // Check for other repository creation errors
+          if (errorData.detail && errorData.detail.includes("Repository creation failed")) {
+            toast({
+              title: "Error al crear repositorio",
+              description:
+                "No se pudo crear el repositorio en tu cuenta. Verifica que tengas permisos suficientes en GitHub.",
+              variant: "destructive",
+            })
+            return
+          }
+
+          // Generic error handling
           throw new Error("Error en la respuesta del servidor")
         }
       } else {

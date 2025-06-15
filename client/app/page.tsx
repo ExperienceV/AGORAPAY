@@ -209,11 +209,14 @@ export default function LandingPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-gradient-to-br from-blue-500/20 to-purple-600/20 border-blue-500/30 backdrop-blur-sm">
+            <Card className="bg-white/5 border-white/10 backdrop-blur-sm relative overflow-hidden">
               <CardHeader>
-                <Badge className="w-fit bg-blue-500/20 text-blue-300 border-blue-500/30 mb-2">Recomendado</Badge>
-                <CardTitle className="text-white text-2xl">Para Vendedores</CardTitle>
-                <CardDescription className="text-gray-300">Monetiza tu código</CardDescription>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-600/10 pointer-events-none" />
+                <div className="relative z-10">
+                  <Badge className="w-fit bg-blue-500/20 text-blue-300 border-blue-500/30 mb-2">Recomendado</Badge>
+                  <CardTitle className="text-white text-2xl">Para Vendedores</CardTitle>
+                  <CardDescription className="text-gray-300">Monetiza tu código</CardDescription>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
