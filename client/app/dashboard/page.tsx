@@ -247,9 +247,6 @@ export default function DashboardPage() {
             </div>
             <span className="text-xl font-bold text-white">AgoraPay</span>
             <nav className="hidden md:flex items-center space-x-6 ml-8">
-              <Link href="/marketplace" className="text-gray-300 hover:text-white transition-colors">
-                Marketplace
-              </Link>
             </nav>
           </div>
 
