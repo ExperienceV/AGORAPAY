@@ -1,242 +1,300 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Github, Code, Shield, Zap, Users, Star, CheckCircle, AlertTriangle } from "lucide-react"
+import { Github, Code, Shield, Zap, AlertTriangle, ArrowRight, Terminal, Eye, DollarSign, Users } from "lucide-react"
 import Link from "next/link"
+import { useState, useEffect } from "react"
 
 export default function LandingPage() {
+  const [terminalText, setTerminalText] = useState("")
+  const [currentStep, setCurrentStep] = useState(0)
+  const [isTyping, setIsTyping] = useState(false)
+
+  const terminalSteps = [
+    "$ git clone https://github.com/dev/awesome-project.git",
+    "Cloning into 'awesome-project'...",
+    "remote: Enumerating objects: 156, done.",
+    "remote: Total 156 (delta 0), reused 0 (delta 0)",
+    "Receiving objects: 100% (156/156), 2.4 MiB | 1.2 MiB/s, done.",
+    "$ cd awesome-project",
+    "$ npm install",
+    "✨ Installing dependencies...",
+    "🚀 Project ready! Time to build something amazing.",
+  ]
+
+  useEffect(() => {
+    if (currentStep < terminalSteps.length) {
+      setIsTyping(true)
+      const timeout = setTimeout(
+        () => {
+          setTerminalText((prev) => prev + terminalSteps[currentStep] + "\n")
+          setCurrentStep((prev) => prev + 1)
+          setIsTyping(false)
+        },
+        currentStep === 0 ? 1000 : 800,
+      )
+      return () => clearTimeout(timeout)
+    }
+  }, [currentStep])
+
+  const stats = [
+    { label: "Repositorios", value: "1,247", icon: Code },
+    { label: "Desarrolladores", value: "892", icon: Users },
+    { label: "Transacciones", value: "$12.4k", icon: DollarSign },
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-black text-white overflow-hidden">
+      {/* Geometric Background */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute top-20 left-10 w-32 h-32 border border-purple-500/20 rotate-45" />
+        <div className="absolute top-40 right-20 w-24 h-24 border border-blue-500/20 rotate-12" />
+        <div className="absolute bottom-40 left-1/4 w-16 h-16 bg-teal-500/10 rotate-45" />
+        <div className="absolute bottom-20 right-1/3 w-20 h-20 border border-pink-500/20 -rotate-12" />
+        <div className="absolute top-1/2 left-1/2 w-40 h-40 border border-yellow-500/10 rotate-45 transform -translate-x-1/2 -translate-y-1/2" />
+      </div>
+
       {/* Warning Banner */}
-      <div className="bg-amber-600/20 border-b border-amber-500/30 backdrop-blur-sm">
+      <div className="relative z-10 bg-gradient-to-r from-amber-900/30 to-orange-900/30 border-b border-amber-700/50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-center space-x-2 text-amber-200">
-            <AlertTriangle className="w-5 h-5" />
-            <p className="text-sm font-medium">
-              ⚠️ Proyecto Personal en Desarrollo - Actualmente sin integración PayPal Partner oficial
-            </p>
+            <AlertTriangle className="w-4 h-4 animate-pulse" />
+            <span className="text-sm font-mono">[BETA] Proyecto personal - Sin integración PayPal Partner oficial</span>
           </div>
         </div>
       </div>
 
       {/* Header */}
-      <header className="border-b border-white/10 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <Code className="w-5 h-5 text-white" />
+      <header className="relative z-10 border-b border-zinc-800/50 backdrop-blur-sm">
+        <div className="container mx-auto px-6 py-6 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <Code className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-white">AgoraPay</span>
+            <span className="text-2xl font-bold">AgoraPay</span>
           </div>
-          <nav className="hidden md:flex items-center space-x-6">
-            <a href="#features" className="text-gray-300 hover:text-white transition-colors">
-              Características
+          <nav className="hidden md:flex items-center space-x-8">
+            <a href="#features" className="text-zinc-400 hover:text-white transition-colors font-mono text-sm">
+              ./features
             </a>
-            <a href="#pricing" className="text-gray-300 hover:text-white transition-colors">
-              Precios
+            <a href="#pricing" className="text-zinc-400 hover:text-white transition-colors font-mono text-sm">
+              ./pricing
             </a>
-            <a href="#about" className="text-gray-300 hover:text-white transition-colors">
-              Acerca de
+            <a href="#demo" className="text-zinc-400 hover:text-white transition-colors font-mono text-sm">
+              ./demo
             </a>
           </nav>
-          <div className="flex items-center space-x-4"></div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto text-center">
-          <Badge className="mb-4 bg-blue-500/20 text-blue-300 border-blue-500/30">🚀 Plataforma Beta Disponible</Badge>
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-            Marketplace de
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              {" "}
-              Repositorios
-            </span>
-          </h1>
-          <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-            Compra y vende repositorios de código de forma segura. Conecta con GitHub, gestiona tus proyectos y monetiza
-            tu trabajo con pagos seguros vía PayPal.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/login">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-lg px-8 py-3"
-              >
-                <Github className="w-5 h-5 mr-2" />
-                Conectar con GitHub
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="py-20 px-4">
+      <section className="relative z-10 py-20 px-6">
         <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">Características Principales</h2>
-            <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-              Todo lo que necesitas para comprar y vender repositorios de forma segura
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-              <CardHeader>
-                <Github className="w-10 h-10 text-blue-400 mb-2" />
-                <CardTitle className="text-white">Integración GitHub</CardTitle>
-                <CardDescription className="text-gray-300">
-                  Conecta directamente con tu cuenta de GitHub para gestionar repositorios
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-              <CardHeader>
-                <Shield className="w-10 h-10 text-green-400 mb-2" />
-                <CardTitle className="text-white">Pagos Seguros</CardTitle>
-                <CardDescription className="text-gray-300">
-                  Transacciones protegidas con PayPal y autorización de pagos
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-              <CardHeader>
-                <Zap className="w-10 h-10 text-yellow-400 mb-2" />
-                <CardTitle className="text-white">Transferencia Automática</CardTitle>
-                <CardDescription className="text-gray-300">
-                  Los repositorios se transfieren automáticamente tras la compra
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-              <CardHeader>
-                <Users className="w-10 h-10 text-purple-400 mb-2" />
-                <CardTitle className="text-white">Comunidad</CardTitle>
-                <CardDescription className="text-gray-300">
-                  Conecta con desarrolladores y encuentra proyectos únicos
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-              <CardHeader>
-                <Code className="w-10 h-10 text-blue-400 mb-2" />
-                <CardTitle className="text-white">Vista Previa</CardTitle>
-                <CardDescription className="text-gray-300">
-                  Explora el código antes de comprar con nuestro visor integrado
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-              <CardHeader>
-                <Star className="w-10 h-10 text-orange-400 mb-2" />
-                <CardTitle className="text-white">Calidad Garantizada</CardTitle>
-                <CardDescription className="text-gray-300">
-                  Sistema de valoraciones y comentarios de la comunidad
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </section>
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left Column */}
+            <div className="space-y-8">
+              <div className="space-y-6">
+                <Badge className="bg-zinc-800 text-zinc-300 border-zinc-700 font-mono">
+                  v1.0.0-beta • Open Source Marketplace
+                </Badge>
 
-      {/* How it Works */}
-      <section className="py-20 px-4 bg-black/20">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">¿Cómo Funciona?</h2>
-            <p className="text-gray-300 text-lg">Simple, rápido y seguro</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-xl">1</span>
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Conecta tu GitHub</h3>
-              <p className="text-gray-300">Inicia sesión con tu cuenta de GitHub para acceder a tus repositorios</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-xl">2</span>
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Explora o Vende</h3>
-              <p className="text-gray-300">Busca repositorios para comprar o sube los tuyos para vender</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white font-bold text-xl">3</span>
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Pago Seguro</h3>
-              <p className="text-gray-300">
-                Completa la transacción con PayPal y recibe el repositorio automáticamente
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+                <h1 className="text-5xl lg:text-7xl font-black leading-tight">
+                  <span className="block text-white">CODE</span>
+                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">
+                    MARKETPLACE
+                  </span>
+                  <span className="block text-zinc-400 text-2xl lg:text-3xl font-normal mt-4">
+                    for developers, by developers
+                  </span>
+                </h1>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-20 px-4">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">Precios Transparentes</h2>
-            <p className="text-gray-300 text-lg">Sin costos ocultos, solo pagas por lo que usas</p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-white text-2xl">Para Compradores</CardTitle>
-                <CardDescription className="text-gray-300">Accede a repositorios únicos</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+                <p className="text-xl text-zinc-300 leading-relaxed max-w-lg">
+                  Compra repositorios únicos. Vende tu código. Todo integrado con GitHub y pagos seguros via PayPal.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/login">
+                  <Button size="lg" className="bg-white text-black hover:bg-zinc-200 text-lg px-8 py-4 font-semibold">
+                    <Github className="w-5 h-5 mr-2" />
+                    Connect GitHub
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-lg px-8 py-4"
+                >
+                  <Eye className="w-5 h-5 mr-2" />
+                  View Demo
+                </Button>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-6 pt-8 border-t border-zinc-800">
+                {stats.map((stat, index) => (
+                  <div key={stat.label} className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <stat.icon className="w-5 h-5 text-zinc-400" />
+                    </div>
+                    <div className="text-2xl font-bold text-white">{stat.value}</div>
+                    <div className="text-sm text-zinc-500 font-mono">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Column - Terminal */}
+            <div className="relative">
+              <div className="bg-zinc-900 rounded-lg border border-zinc-700 shadow-2xl">
+                <div className="flex items-center justify-between px-4 py-3 bg-zinc-800 rounded-t-lg border-b border-zinc-700">
                   <div className="flex items-center space-x-2">
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                    <span className="text-gray-300">Acceso completo al código</span>
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                    <span className="text-gray-300">Transferencia automática</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                    <span className="text-gray-300">Soporte técnico</span>
-                  </div>
-                  <div className="pt-4">
-                    <p className="text-2xl font-bold text-white">Precio variable</p>
-                    <p className="text-gray-300">Según el repositorio</p>
+                    <Terminal className="w-4 h-4 text-zinc-400" />
+                    <span className="text-zinc-400 text-sm font-mono">agorapay-terminal</span>
                   </div>
                 </div>
+                <div className="p-6 font-mono text-sm min-h-[300px]">
+                  <pre className="text-green-400 whitespace-pre-wrap">
+                    {terminalText}
+                    {isTyping && <span className="animate-pulse">|</span>}
+                  </pre>
+                </div>
+              </div>
+
+              {/* Floating Elements */}
+              <div className="absolute -top-4 -right-4 bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-mono animate-bounce">
+                LIVE
+              </div>
+              <div className="absolute -bottom-4 -left-4 bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-mono">
+                SECURE
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section id="features" className="relative z-10 py-20 px-6 bg-zinc-900/30">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">
+              <span className="text-zinc-500 font-mono text-lg block mb-2">// Features</span>
+              Built Different
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                icon: Github,
+                title: "GitHub Native",
+                description: "Direct integration with your GitHub repositories",
+                accent: "border-l-blue-500",
+              },
+              {
+                icon: Shield,
+                title: "Secure Payments",
+                description: "PayPal integration with escrow protection",
+                accent: "border-l-green-500",
+              },
+              {
+                icon: Zap,
+                title: "Instant Transfer",
+                description: "Automatic repository transfer on purchase",
+                accent: "border-l-yellow-500",
+              },
+              {
+                icon: Eye,
+                title: "Code Preview",
+                description: "Browse code before you buy with our viewer",
+                accent: "border-l-purple-500",
+              },
+            ].map((feature, index) => (
+              <Card
+                key={feature.title}
+                className={`bg-zinc-800/50 border-zinc-700 border-l-4 ${feature.accent} hover:bg-zinc-800 transition-all duration-300 group`}
+              >
+                <CardHeader>
+                  <feature.icon className="w-8 h-8 text-zinc-400 group-hover:text-white transition-colors" />
+                  <CardTitle className="text-white text-lg">{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-zinc-400 text-sm">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="relative z-10 py-20 px-6">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">
+              <span className="text-zinc-500 font-mono text-lg block mb-2">// Pricing</span>
+              Simple & Transparent
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            <Card className="bg-zinc-900 border-zinc-700 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+              <CardHeader>
+                <CardTitle className="text-2xl text-white flex items-center">
+                  <Users className="w-6 h-6 mr-2 text-blue-400" />
+                  Buyers
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-4xl font-bold text-white">FREE</div>
+                <p className="text-zinc-400">Only pay for the repositories you buy</p>
+                <ul className="space-y-2 text-sm text-zinc-300">
+                  <li className="flex items-center">
+                    <span className="text-green-400 mr-2">✓</span> Full source code access
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-400 mr-2">✓</span> Automatic transfer
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-400 mr-2">✓</span> No hidden fees
+                  </li>
+                </ul>
               </CardContent>
             </Card>
-            <Card className="bg-white/5 border-white/10 backdrop-blur-sm relative overflow-hidden">
+
+            <Card className="bg-zinc-900 border-zinc-700 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-teal-500"></div>
               <CardHeader>
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-600/10 pointer-events-none" />
-                <div className="relative z-10">
-                  <Badge className="w-fit bg-blue-500/20 text-blue-300 border-blue-500/30 mb-2">Recomendado</Badge>
-                  <CardTitle className="text-white text-2xl">Para Vendedores</CardTitle>
-                  <CardDescription className="text-gray-300">Monetiza tu código</CardDescription>
-                </div>
+                <CardTitle className="text-2xl text-white flex items-center">
+                  <Code className="w-6 h-6 mr-2 text-green-400" />
+                  Sellers
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                    <span className="text-gray-300">Comisión del 5%</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                    <span className="text-gray-300">Pagos automáticos</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                    <span className="text-gray-300">Dashboard completo</span>
-                  </div>
-                  <div className="pt-4">
-                    <p className="text-2xl font-bold text-white">Gratis</p>
-                    <p className="text-gray-300">Solo pagas al vender</p>
-                  </div>
+              <CardContent className="space-y-4">
+                <div className="text-4xl font-bold text-white">
+                  5% <span className="text-lg text-zinc-400">commission</span>
                 </div>
+                <p className="text-zinc-400">Only when you make a sale</p>
+                <ul className="space-y-2 text-sm text-zinc-300">
+                  <li className="flex items-center">
+                    <span className="text-green-400 mr-2">✓</span> List repositories for free
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-400 mr-2">✓</span> Automatic payouts
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-400 mr-2">✓</span> Sales dashboard
+                  </li>
+                </ul>
               </CardContent>
             </Card>
           </div>
@@ -244,35 +302,44 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-r from-blue-600 to-purple-600">
-        <div className="container mx-auto text-center">
-          <h2 className="text-4xl font-bold text-white mb-4">¿Listo para comenzar?</h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Únete a nuestra comunidad de desarrolladores y comienza a monetizar tu código hoy mismo
-          </p>
-          <Link href="/login">
-            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-3">
-              <Github className="w-5 h-5 mr-2" />
-              Conectar Ahora
-            </Button>
-          </Link>
+      <section className="relative z-10 py-20 px-6 bg-gradient-to-r from-zinc-900 to-zinc-800">
+        <div className="container mx-auto text-center max-w-3xl">
+          <div className="space-y-8">
+            <h2 className="text-5xl font-bold">
+              Ready to{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                monetize
+              </span>{" "}
+              your code?
+            </h2>
+            <p className="text-xl text-zinc-300">Join hundreds of developers already earning from their repositories</p>
+            <Link href="/login">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white text-xl px-12 py-6 font-semibold"
+              >
+                <Github className="w-6 h-6 mr-3" />
+                Start Selling Today
+                <ArrowRight className="w-6 h-6 ml-3" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 py-12 px-4">
-        <div className="container mx-auto text-center">
-          <div className="mb-4">
-            <div className="flex items-center justify-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Code className="w-5 h-5 text-white" />
+      <footer className="relative z-10 border-t border-zinc-800 py-12 px-6 bg-black">
+        <div className="container mx-auto">
+          <div className="flex flex-col items-center space-y-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Code className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">AgoraPay</span>
+              <span className="text-2xl font-bold">AgoraPay</span>
             </div>
-            <p className="text-gray-400">El marketplace líder para repositorios de código</p>
-          </div>
-          <div className="border-t border-white/10 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 AgoraPay. Todos los derechos reservados.</p>
+            <p className="text-zinc-500 text-center font-mono">
+              &copy; 2025 AgoraPay • Built with ❤️ for the developer community
+            </p>
           </div>
         </div>
       </footer>
