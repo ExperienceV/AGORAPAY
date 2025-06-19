@@ -1,18 +1,28 @@
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
+from pydantic import ConfigDict
+from dotenv import load_dotenv
+import os
+import sys
+
+is_test = 'pytest' in sys.modules
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+env_file = os.path.join(BASE_DIR, "tests/.env.test") if is_test else os.path.join(BASE_DIR, ".env")
+load_dotenv(env_file)
 
 class Settings(BaseSettings):
     # COOKIE SETTINGS
-    SAMESITE: str = "none"  # none para permitir cross-site
-    HTTPONLY: bool = True   # True para seguridad
-    SECURE: bool = True     # True para conexiones HTTPS
+    SAMESITE: str = "none"  
+    HTTPONLY: bool = True  
+    SECURE: bool = True    
     FRONTEND_URL: str = "https://agorapay.a1devhub.tech"
     BACKEND_URL: str = "https://agoserver.a1devhub.tech"
     DOMAIN: str = ".a1devhub.tech"
     
-    # Configuración de CORS
+    # CORS SETTINGS
     CORS_ALLOW_CREDENTIALS: bool = True
-    CORS_ALLOW_ORIGINS: list =[
+    CORS_ALLOW_ORIGINS: list = [
         "https://agorapay.a1devhub.tech"
     ]
     CORS_ALLOW_METHODS: list = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
@@ -31,8 +41,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_DAYS: int = 1  # 1 Days
     REFRESH_TOKEN_EXPIRE_DAYS: int = 15  # 15 Days
 
-    ACCESS_TOKEN_MAX_AGE: int = ACCESS_TOKEN_EXPIRE_DAYS * 24 * 60 * 60   # 15 DAYS ON SECONDS
-    REFRESH_TOKEN_MAX_AGE: int = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60 # 30 DAYS ON SECONDS
+    ACCESS_TOKEN_MAX_AGE: int = ACCESS_TOKEN_EXPIRE_DAYS * 24 * 60 * 60   # 1 DAY IN SECONDS
+    REFRESH_TOKEN_MAX_AGE: int = REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60 # 15 DAYS IN SECONDS
 
     # AUTH SETTINGS
     GITHUB_CLIENT_ID: str
@@ -41,12 +51,10 @@ class Settings(BaseSettings):
     FERNET_KEY: str
 
     # PAYMENT SETTINGS
-        # PAYPAL:
     PAYPAL_CLIENT_ID: str
     PAYPAL_SECRET: str
     PAYPAL_API_URL: str
 
-    class Config:
-        env_file = ".env"
+    model_config = ConfigDict(env_file=env_file)
 
 settings = Settings()

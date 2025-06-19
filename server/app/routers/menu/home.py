@@ -12,33 +12,33 @@ async def get_user_info(
     email: str = None, 
     user: dict = Depends(auth_dependency)):
     """
-    📋 Obtiene información del perfil del usuario y sus repositorios.
+    📋 Retrieves user profile information and their repositories.
 
-    📥 Parámetros:
-        - username (str, opcional): Nombre de usuario de GitHub. Si se proporciona, tiene prioridad.
-        - email (str, opcional): Correo electrónico del usuario. Se usa si no se proporciona `username`.
-        - user (dict): Usuario autenticado extraído del token JWT (por defecto, si no se pasan `username` ni `email`).
+    Parameters:
+        - username (str, optional): GitHub username. If provided, takes priority.
+        - email (str, optional): User's email. Used if `username` is not provided.
+        - user (dict): Authenticated user extracted from the JWT token (default if neither `username` nor `email` is provided).
 
-    🧠 Lógica:
-        - Busca el perfil del usuario usando `username`, `email` o ID autenticado.
-        - Recupera la lista de repositorios subidos o transferidos por el usuario.
-        - Clasifica los repositorios en `uploaded` y `transferred`.
+    Logic:
+        - Looks up the user profile using `username`, `email`, or authenticated ID.
+        - Retrieves the list of repositories uploaded or transferred to the user.
+        - Classifies repositories into `uploaded` and `transferred`.
 
-    📤 Retorna:
-        - Un JSON con la siguiente estructura:
+    Returns:
+        - A JSON with the following structure:
         ```json
         {
             "user": {
-                "profile": {...},                 // Datos del perfil del usuario
-                "repositories": [...],           // Repos subidos por el usuario
-                "transfer_repository": [...]     // Repos transferidos al usuario
+                "profile": {...},                 // User profile data
+                "repositories": [...],           // Uploaded repositories
+                "transfer_repository": [...]     // Repositories transferred to the user
             }
         }
         ```
-        - En caso de error (usuario no encontrado), retorna un JSON con el detalle del error y el código HTTP correspondiente.
+        - In case of error (user not found), returns a JSON with error details and the corresponding HTTP code.
     """
     try:
-        # Obtener perfil
+        # Get profile
         if username:
             data_profile = get_user_data(username=username)
         elif email:
@@ -49,7 +49,7 @@ async def get_user_info(
         if not data_profile:
             raise HTTPException(status_code=404, detail="User not found.")
 
-        # Obtener repositorios subidos (y transferidos) por el usuario
+        # Get uploaded (and transferred) repositories for the user
         if username:
             all_repos = get_set_repositories(user_name=username)
         elif email:
@@ -60,7 +60,7 @@ async def get_user_info(
         if not all_repos:
             all_repos = []
 
-        # Separar normales vs transferidos
+        # Separate uploaded vs transferred
         uploaded = []
         transferred = []
 
@@ -72,7 +72,7 @@ async def get_user_info(
                 del repo["is_transfer"]
                 uploaded.append(repo)
 
-        # Retornar estructura final
+        # Return final structure
         user_info = {
             "profile": data_profile,
             "repositories": uploaded,

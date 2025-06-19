@@ -9,14 +9,17 @@ from pathlib import Path
 import zipfile
 from icecream import ic
 from typing import Optional
-from app.utils.download_upload import parse_github_repo_url
+from server.app.utils.functions import github_parse_url
 from fastapi import HTTPException
 from app.database.queries.user import get_token_by_user
 from app.database.queries.repository import get_set_repositories, save_transfer_repo
-import uuid
 
 
-def download_github_repo(owner: str, repo: str, access_token: str, branch: str = "main") -> tuple[Path, Path]:
+def download_github_repository(owner: str, repo: str, access_token: str, branch: str = "main") -> tuple[Path, Path]:
+    """
+    Download a GitHub repository as a ZIP and extract it to a temporary directory.
+    Returns the path to the extracted repo root and the temp directory.
+    """
     zip_url = f"https://api.github.com/repos/{owner}/{repo}/zipball/{branch}"
     headers = {
         "Authorization": f"token {access_token}",
@@ -28,7 +31,7 @@ def download_github_repo(owner: str, repo: str, access_token: str, branch: str =
     ic(response.status_code)
 
     if response.status_code != 200:
-        raise Exception(f"Error al descargar el repositorio: {response.status_code} - {response.text}")
+        raise Exception(f"Failed to download repository: {response.status_code} - {response.text}")
 
     temp_dir = Path(tempfile.mkdtemp())
     zip_path = temp_dir / f"{repo}.zip"
@@ -44,33 +47,43 @@ def download_github_repo(owner: str, repo: str, access_token: str, branch: str =
     ic(extracted_folders)
 
     if not extracted_folders:
-        raise Exception("No se encontró carpeta extraída en el ZIP.")
+        raise Exception("No extracted folder found in ZIP.")
 
     repo_root_path = extracted_folders[0]
     return repo_root_path, temp_dir
 
 
 def get_github_username(token: str) -> str:
+    """
+    Retrieve the GitHub username associated with the provided token.
+    """
     url = "https://api.github.com/user"
     headers = {"Authorization": f"token {token}"}
     response = requests.get(url, headers=headers)
     ic(response.status_code)
 
     if response.status_code != 200:
-        raise Exception(f"Error al obtener usuario: {response.status_code} - {response.text}")
+        raise Exception(f"Failed to get user: {response.status_code} - {response.text}")
 
     username = response.json()["login"]
     ic(username)
     return username
 
 
-def download_user_repo(token: str, repo: str, branch: str = "main") -> Path:
+def download_user_repository(token: str, repo: str, branch: str = "main") -> Path:
+    """
+    Download a repository for the authenticated user.
+    """
     owner = get_github_username(token)
     ic(owner)
-    return download_github_repo(owner, repo, token, branch)
+    return download_github_repository(owner, repo, token, branch)
 
 
-def create_github_repo(repo_name: str, token: str, private: bool = True) -> str:
+def create_github_repository(repo_name: str, token: str, private: bool = True) -> str:
+    """
+    Create a new GitHub repository for the authenticated user.
+    Returns the clone URL.
+    """
     url = "https://api.github.com/user/repos"
     headers = {
         "Authorization": f"token {token}",
@@ -88,15 +101,19 @@ def create_github_repo(repo_name: str, token: str, private: bool = True) -> str:
     ic(response.status_code, response.text)
 
     if response.status_code != 201:
-        raise Exception(f"Error al crear repositorio: {response.text}")
+        raise Exception(f"Failed to create repository: {response.text}")
 
     return response.json()["clone_url"]
 
 
-def upload_repo_to_github(local_repo_path: Path, new_repo_name: str, github_token: str) -> str:
+def upload_repository_to_github(local_repo_path: Path, new_repo_name: str, github_token: str) -> str:
+    """
+    Upload a local repository to a new GitHub repository.
+    Returns the new repository's clone URL.
+    """
     ic(local_repo_path, new_repo_name)
 
-    clone_url = create_github_repo(new_repo_name, github_token)
+    clone_url = create_github_repository(new_repo_name, github_token)
     authed_url = clone_url.replace("https://", f"https://{github_token}@")
     ic(clone_url, authed_url)
 
@@ -104,24 +121,27 @@ def upload_repo_to_github(local_repo_path: Path, new_repo_name: str, github_toke
         subprocess.run(["git", "init"], cwd=local_repo_path, check=True)
         subprocess.run(["git", "remote", "add", "origin", authed_url], cwd=local_repo_path, check=True)
         subprocess.run(["git", "add", "."], cwd=local_repo_path, check=True)
-        subprocess.run(["git", "commit", "-m", "Importado desde compra en plataforma"], cwd=local_repo_path, check=True)
+        subprocess.run(["git", "commit", "-m", "Imported from AgoraPay platform"], cwd=local_repo_path, check=True)
         subprocess.run(["git", "branch", "-M", "main"], cwd=local_repo_path, check=True)
         subprocess.run(["git", "push", "-u", "origin", "main"], cwd=local_repo_path, check=True)
 
     except subprocess.CalledProcessError as e:
         ic(e)
-        raise Exception(f"Error al subir repositorio a GitHub: {str(e)}")
+        raise Exception(f"Failed to upload repository to GitHub: {str(e)}")
 
     finally:
         temp_root = local_repo_path.parent
-        ic(f"Eliminando carpeta temporal: {temp_root}")
+        ic(f"Deleting temporary folder: {temp_root}")
         shutil.rmtree(temp_root, ignore_errors=True)
 
-    ic("Repositorio subido con éxito")
+    ic("Repository uploaded successfully")
     return clone_url
 
 
 def list_github_repositories(access_token: str):
+    """
+    List all repositories for the authenticated user.
+    """
     url = "https://api.github.com/user/repos"
     headers = {
         "Authorization": f"Bearer {access_token}",
@@ -138,28 +158,30 @@ def list_github_repositories(access_token: str):
     response = requests.get(url, headers=headers, params=params)
     ic(response.status_code)
 
-    if response.status_code == 200:        
+    if response.status_code == 200:
         repos_data = []
-        for repo in response.json():            
+        for repo in response.json():
             repos_data.append({
-                "nombre": repo["name"],
+                "name": repo["name"],
                 "url": repo["html_url"],
-                "visibilidad": "Privado" if repo["private"] else "Público",
-                "default_branch": repo["default_branch"],
+                "visibility": "Private" if repo["private"] else "Public",
                 "default_branch": repo["default_branch"]
             })
         ic(len(repos_data))
         return repos_data
     else:
-        raise Exception(f"Error al obtener repositorios: {response.status_code} - {response.text}")
+        raise Exception(f"Failed to get repositories: {response.status_code} - {response.text}")
 
 
-def search_repo_tree(
-    owner: str = "ExperienceV", 
-    repo: str = "ChatBot-OpenAI", 
+def get_repository_tree(
+    owner: str,
+    repo: str,
     branch: str = "main",
-    token: str = None
+    token: Optional[str] = None
 ):
+    """
+    Get the file tree of a repository for a given branch.
+    """
     headers = {
         "Accept": "application/vnd.github.v3+json"
     }
@@ -168,13 +190,13 @@ def search_repo_tree(
         headers["Authorization"] = f"token {token}"
 
     try:
-        # Obtener el SHA del último commit en el branch
+        # Get the SHA of the latest commit in the branch
         url_branch = f"https://api.github.com/repos/{owner}/{repo}/branches/{branch}"
         response_branch = requests.get(url_branch, headers=headers)
         response_branch.raise_for_status()
         sha_commit = response_branch.json()["commit"]["sha"]
 
-        # Obtener el árbol del repositorio usando el SHA del commit
+        # Get the repository tree using the commit SHA
         url_tree = f"https://api.github.com/repos/{owner}/{repo}/git/trees/{sha_commit}?recursive=1"
         response_tree = requests.get(url_tree, headers=headers)
         response_tree.raise_for_status()
@@ -182,16 +204,20 @@ def search_repo_tree(
         return response_tree.json()
 
     except requests.exceptions.RequestException as e:
-        print(f"Error al obtener el árbol del repositorio: {e}")
+        print(f"Failed to get repository tree: {e}")
         return None
     
 
-async def fetch_file_from_repo(
+async def fetch_file_from_repository(
     owner: str,
     repo: str,
     path: str,
     token: Optional[str] = None
 ) -> dict:
+    """
+    Fetch a file's content from a GitHub repository.
+    Returns a preview (first 30 lines) of the file content.
+    """
     headers = {
         "Accept": "application/vnd.github.v3+json"
     }
@@ -207,13 +233,13 @@ async def fetch_file_from_repo(
 
     if r.status_code != 200:
         return {
-            "content": f"// Error {r.status_code}: no se pudo obtener el archivo"
+            "content": f"// Error {r.status_code}: could not fetch the file"
         }
 
     data = r.json()
     if "content" not in data:
         return {
-            "content": "// El archivo no contiene datos válidos"
+            "content": "// The file does not contain valid data"
         }
 
     try:
@@ -221,7 +247,7 @@ async def fetch_file_from_repo(
         preview = "\n".join(content.splitlines()[:30])
         return {"content": preview}
     except Exception as e:
-        return {"content": f"// Error al decodificar el archivo: {e}"}
+        return {"content": f"// Error decoding file: {e}"}
 
 
 async def transfer_repository(
@@ -231,61 +257,58 @@ async def transfer_repository(
     repo_url: str
 ) -> dict:
     """
-    Endpoint to transfer a repository from one user to another.
-    This endpoint allows a user to transfer a repository from a seller's GitHub account
+    Transfer a repository from a seller to a buyer (current user).
+    Downloads the repo from the seller's account and uploads it to the buyer's account.
     """
-    ic("Inicializando transferencia de repositorio")
+    ic("Initializing repository transfer")
     try:
-        ic("Recibiendo solicitud de transferencia de repositorio")
-
+        ic("Received repository transfer request")
         # Extract owner and repo name from the provided URL
-        ic("Analizando URL del repositorio:", repo_url)
-        owner, repo_name = parse_github_repo_url(repo_url)
+        ic("Parsing repository URL:", repo_url)
+        owner, repo_name = github_parse_url(repo_url)
         ic("Owner:", owner, "Repo name:", repo_name)
 
         # Get tokens for both seller and buyer
-        ic("Obteniendo tokens de GitHub para el vendedor y el comprador")
+        ic("Getting GitHub tokens for seller and buyer")
         seller_token = get_token_by_user(user_id=seller_id)
         buyer_token = get_token_by_user(user_id=user["id"])
-        ic("Tokens obtenidos:")
+        ic("Tokens obtained:")
         ic(f"Seller token: {'***' if seller_token else None}, Buyer token: {'***' if buyer_token else None}")
 
         # Get repository information from the seller's account
-        ic("Obteniendo repositorios del vendedor con ID:", seller_id)
-        data_repo = get_set_repositories(
-            user_id=seller_id
-        )
-        ic("Repositorios del vendedor obtenidos:")
-        ic("Obteniendo repo_id del repositorio con URL:", repo_url)
+        ic("Getting seller's repositories with ID:", seller_id)
+        seller_repos = get_set_repositories(user_id=seller_id)
+        ic("Seller's repositories obtained:")
+        ic("Getting repo_id for repository with URL:", repo_url)
         repo_id = next(
-            (repo["repository_id"] for repo in data_repo if repo["url"] == repo_url),
+            (repo["repository_id"] for repo in seller_repos if repo["url"] == repo_url),
             None
         )
-        ic("Repo ID encontrado:", repo_id)
+        ic("Repo ID found:", repo_id)
 
         # Download the repository from the seller's account
-        ic("Descargando repositorio del vendedor:", repo_name)
-        downloaded_path, temp_dir = download_github_repo(
+        ic("Downloading seller's repository:", repo_name)
+        downloaded_path, temp_dir = download_github_repository(
             owner=owner,
             repo=repo_name,
             access_token=seller_token
         )
-        ic("Repositorio descargado en:", downloaded_path, "con directorio temporal:", temp_dir)
+        ic("Repository downloaded at:", downloaded_path, "with temp dir:", temp_dir)
 
         # Upload the repository to the buyer's account
         unique_name = f"AgoraPay-{repo_name}"
-        ic("Subiendo repositorio al GitHub del comprador con nombre:", unique_name)
-        new_repo_url = upload_repo_to_github(
+        ic("Uploading repository to buyer's GitHub with name:", unique_name)
+        new_repo_url = upload_repository_to_github(
             local_repo_path=downloaded_path,
             new_repo_name=unique_name,
             github_token=buyer_token
         )
-        ic("Repositorio subido con éxito. Nueva URL del repositorio:", new_repo_url)
+        ic("Repository uploaded successfully. New repository URL:", new_repo_url)
 
         # Save repo information in the database
-        ic("Guardando información del repositorio transferido en la base de datos")        # Get the branch from the seller's repository
+        ic("Saving transferred repository information in the database")
         source_repo = next(
-            (repo for repo in data_repo if repo["repository_id"] == repo_id),
+            (repo for repo in seller_repos if repo["repository_id"] == repo_id),
             None
         )
         if not source_repo:
@@ -299,20 +322,19 @@ async def transfer_repository(
             seller_repo_id=repo_id,
             branch=source_repo.get("branch", "main")
         )
-        ic("Respuesta de la base de datos al guardar la transferencia:", transfer_response)
+        ic("Database response after saving transfer:", transfer_response)
 
-        ic("Transferencia de repositorio completada con éxito")
-        # Return success message with the new repository URL
+        ic("Repository transfer completed successfully")
         return {
-            "message": "Repositorio transferido con éxito",
+            "message": "Repository transferred successfully",
             "repo_url": transfer_response
         }
 
     except HTTPException as http_exc:
-        ic("Excepción HTTP capturada durante la transferencia de repositorio:", http_exc.detail)
+        ic("HTTPException caught during repository transfer:", http_exc.detail)
         print(f"HTTPException: {http_exc.detail}")
         raise http_exc
     except Exception as e:
-        ic("Excepción inesperada durante la transferencia de repositorio:", str(e))
+        ic("Unexpected exception during repository transfer:", str(e))
         print(f"Exception: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

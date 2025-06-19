@@ -10,13 +10,13 @@ router = APIRouter(prefix="/auth/github", tags=["github"])
 @router.get('/login')
 async def login_with_github(request: Request):
     """
-    Inicia el flujo de autenticación OAuth con GitHub.
+    Starts the OAuth authentication flow with GitHub.
 
-    📥 Parámetros:
-        - request (Request): La solicitud HTTP entrante.
+    Parameters:
+        - request (Request): Incoming HTTP request.
 
-    📤 Retorna:
-        - Una redirección al endpoint de autorización de GitHub.
+    Returns:
+        - A redirect to the GitHub authorization endpoint.
     """
     oauth = register_github_oauth()
     redirect_uri = f"{settings.BACKEND_URL}/auth/github/callback"
@@ -26,20 +26,20 @@ async def login_with_github(request: Request):
 @router.get("/callback", name="github_callback")
 async def github_callback(request: Request):
     """
-    Callback que maneja la respuesta de GitHub tras el login.
+    Callback that handles GitHub's response after login.
 
-    📥 Parámetros:
-        - request (Request): La solicitud HTTP con el código de autorización.
+    Parameters:
+        - request (Request): HTTP request with the authorization code.
 
-    🧠 Lógica:
-        - Intercambia el código por un token de acceso.
-        - Obtiene información del usuario desde GitHub.
-        - Registra al usuario en la base de datos (si no existe).
-        - Genera y establece cookies con JWTs (access y refresh).
-        - Redirige al frontend.
+    Logic:
+        - Exchanges the code for an access token.
+        - Gets user info from GitHub.
+        - Registers the user in the database (if not exists).
+        - Generates and sets cookies with JWTs (access and refresh).
+        - Redirects to the frontend.
 
-    📤 Retorna:
-        - Una redirección al frontend con las cookies establecidas.
+    Returns:
+        - A redirect to the frontend with cookies set.
     """
     oauth = register_github_oauth()
     token = await oauth.github.authorize_access_token(request)
@@ -97,13 +97,13 @@ async def github_callback(request: Request):
 @router.post("/logout")
 def logout():
     """
-    Cierra la sesión del usuario eliminando las cookies de autenticación.
+    Logs out the user by deleting authentication cookies.
 
-    📤 Retorna:
-        - Un mensaje JSON indicando que la sesión fue cerrada.
-        - Elimina las cookies 'access_token' y 'refresh_token'.
+    Returns:
+        - A JSON message indicating the session was closed.
+        - Deletes 'access_token' and 'refresh_token' cookies.
     """
-    response = JSONResponse(content={"message": "Sesión cerrada"})
+    response = JSONResponse(content={"message": "Session closed"})
     response.delete_cookie("access_token", domain=".a1devhub.tech")
     response.delete_cookie("refresh_token", domain=".a1devhub.tech")
     return response

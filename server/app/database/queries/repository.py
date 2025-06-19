@@ -1,13 +1,12 @@
 from app.database.config import Base, engine, SessionLocal
-from app.database.models.user import User
-from app.database.models.user import Repository
+from app.database.models.user import User, Repository
 from typing import Optional
 from icecream import ic
-ic("-- Iniciando el módulo de consultas de repositorios --")
+ic("-- Starting repository queries module --")
 Base.metadata.create_all(bind=engine)
 
 # Dependency to get the database session
-ic("Definiendo la función get_db para obtener la sesión de la base de datos")
+ic("Defining get_db function to obtain the database session")
 def get_db():
     db = SessionLocal()
     try:
@@ -16,69 +15,60 @@ def get_db():
         db.close()
 
 
-# Asociar un repositorio como subido por el usuario
-ic("Definiendo la función set_repository para asociar un repositorio subido por el usuario")
+# Associate a repository as uploaded by the user
+ic("Defining set_repository function to associate a repository uploaded by the user")
 def set_repository(user_id: int, name_repository: str, url_repository: str, price: float = 0.0, branch: str = "main"):
     db = get_db()
     try:
-        ic("Iniciando la transacción para subir el repositorio")
-        usuario = db.query(User).get(user_id)
-        if not usuario:
-            raise Exception("Usuario no encontrado")
-
-        # Crear el objeto repositorio dentro de la función
-        ic("Creando el objeto Repository con los datos proporcionados")
+        ic("Starting transaction to upload repository")
+        user = db.query(User).get(user_id)
+        if not user:
+            raise Exception("User not found")
+        ic("Creating Repository object with provided data")
         repo = Repository(
             name=name_repository, 
             url=url_repository, 
             branch=branch,
             price=price, 
             uploader_id=user_id
-            )
-        # Asociar el repositorio al usuario
-        ic("Asociando el repositorio al usuario con ID:", user_id)
+        )
+        ic("Associating repository with user ID:", user_id)
         db.add(repo)
-        usuario.uploaded_repositories.append(repo)
-
+        user.uploaded_repositories.append(repo)
         db.commit()
         db.refresh(repo)
-
-        ic("Repositorio subido correctamente con ID:", repo.id)
-        return {"message": "Repositorio subido correctamente", "repo_id": repo.id}
+        ic("Repository uploaded successfully with ID:", repo.id)
+        return {"message": "Repository uploaded successfully", "repo_id": repo.id}
     except Exception as e:
-        ic("Error al subir el repositorio:", str(e))
+        ic("Error uploading repository:", str(e))
         db.rollback()
-        raise Exception(f"Error al subir el repositorio: {str(e)}")
+        raise Exception(f"Error uploading repository: {str(e)}")
 
 
-# Obtener todos los repositorios subidos por un usuario 
-ic("Definiendo la función get_set_repositories para obtener repositorios subidos por un usuario")
+# Get all repositories uploaded by a user
+ic("Defining get_set_repositories function to get repositories uploaded by a user")
 def get_set_repositories(
         user_id: Optional[int] = None, 
         user_name: Optional[str] = None, 
         user_email: Optional[str] = None
         ):
     db = get_db()
-    ic("Iniciando la consulta para obtener repositorios subidos por el usuario")
+    ic("Starting query to get repositories uploaded by user")
     if user_id:
-        usuario = db.query(User).get(user_id)
+        user = db.query(User).get(user_id)
     elif user_name:
-        usuario = db.query(User).filter(User.username == user_name).first()
+        user = db.query(User).filter(User.username == user_name).first()
     elif user_email:
-        usuario = db.query(User).filter(User.email == user_email).first()
+        user = db.query(User).filter(User.email == user_email).first()
     else:
-        ic("Error: No se proporcionó un identificador de usuario, nombre o correo electrónico.")
-        raise Exception("Debe proporcionar un identificador de usuario, nombre o correo electrónico.")
-    
-    ic("Usuario encontrado:", usuario.username if usuario else "No encontrado")
-    repos = usuario.uploaded_repositories
-
-    ic("Repositorios subidos encontrados:", len(repos) if repos else 0)
+        ic("Error: No user identifier, name, or email provided.")
+        raise Exception("You must provide a user identifier, name, or email.")
+    ic("User found:", user.username if user else "Not found")
+    repos = user.uploaded_repositories
+    ic("Uploaded repositories found:", len(repos) if repos else 0)
     if not repos:
         return None
-    
-    # Convertir los repositorios a un formato serializable  
-    ic("Convirtiendo los repositorios a un formato serializable")
+    ic("Converting repositories to serializable format")
     return [
         {
             "uploader_id": repo.uploader_id,            
@@ -92,8 +82,8 @@ def get_set_repositories(
     ]
 
 
-# Guardar un repositorio transferido por un usuario
-ic("Definiendo la función save_transfer_repo para guardar un repositorio transferido por un usuario")
+# Save a transferred repository for a user
+ic("Defining save_transfer_repo function to save a transferred repository for a user")
 def save_transfer_repo(
     user_id: int,
     repo_name: str,
@@ -103,76 +93,65 @@ def save_transfer_repo(
     branch: str = "main"
 ):
     db = get_db()
-
-    # Validar usuario comprador
-    ic("Validando el usuario comprador con ID:", user_id)
-    comprador = db.query(User).get(user_id)
-    if not comprador:
-        ic("Error: Comprador no encontrado con ID:", user_id)
-        raise Exception("Comprador no encontrado")
-
-    # Crear el nuevo repositorio para el comprador
-    ic("Creando un nuevo repositorio para el comprador")    
-    nuevo_repo = Repository(
+    ic("Validating buyer user with ID:", user_id)
+    buyer = db.query(User).get(user_id)
+    if not buyer:
+        ic("Error: Buyer not found with ID:", user_id)
+        raise Exception("Buyer not found")
+    ic("Creating a new repository for the buyer")    
+    new_repo = Repository(
         name=repo_name,
         url=repo_url,
         branch=branch,
         uploader_id=user_id,
         seller_id=seller_id,
         seller_repo_id=seller_repo_id,
-        is_transfer=True# 👈 Esto es lo importante
+        is_transfer=True
     )
-    # Asociar el repositorio al comprador
-    ic("Asociando el nuevo repositorio al comprador con ID:", user_id)
-    db.add(nuevo_repo)
+    ic("Associating new repository with buyer ID:", user_id)
+    db.add(new_repo)
     db.commit()
-    db.refresh(nuevo_repo)
-
-    # Asociar como repositorio comprado
-    ic("Asociando el nuevo repositorio a la lista de repositorios comprados del comprador")
-    comprador.purchased_repositories.append(nuevo_repo)
+    db.refresh(new_repo)
+    ic("Associating new repository to buyer's purchased repositories list")
+    buyer.purchased_repositories.append(new_repo)
     db.commit()
-    db.refresh(comprador)
-
-    ic("Repositorio comprado y guardado correctamente con ID:", nuevo_repo.id)    
+    db.refresh(buyer)
+    ic("Repository purchased and saved successfully with ID:", new_repo.id)    
     return {
-        "message": "Repositorio comprado y guardado correctamente",
-        "repo_id": nuevo_repo.id,
-        "repo_name": nuevo_repo.name,
-        "repo_url": nuevo_repo.url,
-        "branch": nuevo_repo.branch,
-        "seller_id": nuevo_repo.seller_id,
-        "seller_repo_id": nuevo_repo.seller_repo_id
+        "message": "Repository purchased and saved successfully",
+        "repo_id": new_repo.id,
+        "repo_name": new_repo.name,
+        "repo_url": new_repo.url,
+        "branch": new_repo.branch,
+        "seller_id": new_repo.seller_id,
+        "seller_repo_id": new_repo.seller_repo_id
     }
 
 
-# Obtener todos los repositorios comprados por un usuario
-ic("Definiendo la función get_transfer_repo para obtener repositorios comprados por un usuario")
+# Get all purchased repositories for a user
+ic("Defining get_transfer_repo function to get purchased repositories for a user")
 def get_transfer_repo(
         user_id: Optional[int] = None,
         user_name: Optional[str] = None,
         user_email: Optional[str] = None
         ):
     db = get_db()
-    ic("Iniciando la consulta para obtener repositorios comprados por el usuario")
+    ic("Starting query to get purchased repositories for user")
     if user_id:
-        usuario = db.query(User).get(user_id)
+        user = db.query(User).get(user_id)
     elif user_name:
-        usuario = db.query(User).filter(User.username == user_name).first()
+        user = db.query(User).filter(User.username == user_name).first()
     elif user_email:
-        usuario = db.query(User).filter(User.email == user_email).first()
+        user = db.query(User).filter(User.email == user_email).first()
     else:
-        ic("Error: No se proporcionó un identificador de usuario, nombre o correo electrónico.")
-        raise Exception("Debe proporcionar un identificador de usuario, nombre o correo electrónico.")
-
-    ic("Usuario encontrado:", usuario.username if usuario else "No encontrado")
-    repos = usuario.purchased_repositories
+        ic("Error: No user identifier, name, or email provided.")
+        raise Exception("You must provide a user identifier, name, or email.")
+    ic("User found:", user.username if user else "Not found")
+    repos = user.purchased_repositories
     if not repos:
-        ic("No se encontraron repositorios comprados para el usuario:", usuario.username if usuario else "No encontrado")
+        ic("No purchased repositories found for user:", user.username if user else "Not found")
         return None
-    
-    # Convertir los repositorios a un formato serializable
-    ic("Convirtiendo los repositorios comprados a un formato serializable")    
+    ic("Converting purchased repositories to serializable format")    
     repo_data = [
         {
             "repository_id": repo.id,
@@ -184,31 +163,25 @@ def get_transfer_repo(
             "seller_repo_id": repo.seller_repo_id
         } for repo in repos
     ]
-
-    ic("Repositorios comprados encontrados:", len(repo_data))
+    ic("Purchased repositories found:", len(repo_data))
     return repo_data
 
 
-# Eliminar un repositorio de la base de datos
-ic("Definiendo la función delete_repository para eliminar un repositorio")
+# Delete a repository from the database
+ic("Defining delete_repository function to delete a repository")
 def delete_repository(repo_id: int, user_id: int):
     db = get_db()
     try:
-        ic("Iniciando la transacción para eliminar el repositorio")
-        # Buscar el repositorio
+        ic("Starting transaction to delete repository")
         repo = db.query(Repository).filter_by(id=repo_id, uploader_id=user_id).first()
-
         if not repo:
-            ic("Repositorio no encontrado o no pertenece al usuario")
-            raise Exception("Repositorio no encontrado o no tienes permisos para borrarlo")
-
-        # Eliminar el repositorio
+            ic("Repository not found or does not belong to user")
+            raise Exception("Repository not found or you do not have permission to delete it")
         db.delete(repo)
         db.commit()
-
-        ic("Repositorio eliminado correctamente")
-        return {"message": "Repositorio eliminado correctamente", "repo_id": repo_id}
+        ic("Repository deleted successfully")
+        return {"message": "Repository deleted successfully", "repo_id": repo_id}
     except Exception as e:
-        ic("Error al eliminar el repositorio:", str(e))
+        ic("Error deleting repository:", str(e))
         db.rollback()
-        raise Exception(f"Error al eliminar el repositorio: {str(e)}")
+        raise Exception(f"Error deleting repository: {str(e)}")
