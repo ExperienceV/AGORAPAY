@@ -11,20 +11,20 @@ router = APIRouter(tags=["repository"])
 @router.get("/get_github_repositories")
 async def github_repositories(user: dict = Depends(auth_dependency)) -> list:
     """
-    📋 Obtiene la lista de repositorios de GitHub del usuario autenticado.
+    📋 Retrieves the list of GitHub repositories for the authenticated user.
 
-    📥 Parámetros:
-        - user (dict): Usuario autenticado extraído del token JWT.
+    Parameters:
+        - user (dict): Authenticated user extracted from the JWT token.
 
-    🧠 Lógica:
-        - Obtiene el nombre de usuario y token GitHub desde la base de datos.
-        - Consulta los repositorios usando el token de acceso.
-        - Retorna la lista de repositorios si existen.
+    Logic:
+        - Gets the username and GitHub token from the database.
+        - Queries the repositories using the access token.
+        - Returns the list of repositories if any exist.
 
-    📤 Retorna:
-        - Lista de repositorios en formato JSON.
-        - En caso de no encontrar repositorios, retorna un JSON con mensaje y código 404.
-        - En caso de error HTTP, propaga la excepción correspondiente.
+    Returns:
+        - List of repositories in JSON format.
+        - If no repositories are found, returns a JSON message and 404 code.
+        - In case of HTTP error, propagates the corresponding exception.
     """
     try:
         # get name from user
@@ -61,20 +61,20 @@ async def upload_repository(
     user: dict = Depends(auth_dependency)
 ) -> dict:
     """
-    📤 Sube (registra) un repositorio en la base de datos para el usuario autenticado.
+    📤 Uploads (registers) a repository in the database for the authenticated user.
 
-    📥 Parámetros:
-        - up_model (UploadModel): Modelo con datos del repositorio (nombre, URL, rama).
-        - user (dict): Usuario autenticado extraído del token JWT.
+    Parameters:
+        - up_model (UploadModel): Model with repository data (name, URL, branch).
+        - user (dict): Authenticated user extracted from the JWT token.
 
-    🧠 Lógica:
-        - Extrae el ID y nombre del usuario.
-        - Registra el repositorio con los datos proporcionados.
-        - Retorna la respuesta del registro o un error en caso de fallo.
+    Logic:
+        - Extracts the user's ID and name.
+        - Registers the repository with the provided data.
+        - Returns the registration response or an error if it fails.
 
-    📤 Retorna:
-        - Respuesta con información del repositorio registrado.
-        - En caso de error, retorna un JSON con mensaje y código 500.
+    Returns:
+        - Response with registered repository information.
+        - In case of error, returns a JSON message and 500 code.
     """
     try:
         # get name from user
@@ -95,7 +95,7 @@ async def upload_repository(
         if not response:
             return JSONResponse(
                 status_code=500,
-                content={"message": "Algo a sucedido..."}
+                content={"message": "Something went wrong..."}
             )
         return response
     except HTTPException as http_exc:
@@ -110,19 +110,19 @@ async def get_uploaded_repositories(
     user: dict = Depends(auth_dependency)
 ) -> list:
     """
-    📋 Obtiene la lista de repositorios subidos (registrados) por el usuario autenticado.
+    📋 Retrieves the list of repositories uploaded (registered) by the authenticated user.
 
-    📥 Parámetros:
-        - user (dict): Usuario autenticado extraído del token JWT.
+    Parameters:
+        - user (dict): Authenticated user extracted from the JWT token.
 
-    🧠 Lógica:
-        - Extrae el ID del usuario.
-        - Consulta la base de datos para obtener los repositorios subidos por el usuario.
-        - Retorna la lista o un mensaje si no existen repositorios.
+    Logic:
+        - Extracts the user's ID.
+        - Queries the database for repositories uploaded by the user.
+        - Returns the list or a message if no repositories exist.
 
-    📤 Retorna:
-        - Lista de repositorios registrados.
-        - En caso de no encontrar repositorios, retorna un JSON con mensaje y código 404.
+    Returns:
+        - List of registered repositories.
+        - If no repositories are found, returns a JSON message and 404 code.
     """
     try:
         # get ID from user
@@ -151,20 +151,20 @@ async def delete_repository_endpoint(
     user: dict = Depends(auth_dependency)
 ) -> dict:
     """
-    🗑️ Elimina un repositorio registrado por el usuario autenticado.
+    🗑️ Deletes a repository registered by the authenticated user.
 
-    📥 Parámetros:
-        - repo_id (int): ID del repositorio a eliminar.
-        - user (dict): Usuario autenticado extraído del token JWT.
+    Parameters:
+        - repo_id (int): ID of the repository to delete.
+        - user (dict): Authenticated user extracted from the JWT token.
 
-    🧠 Lógica:
-        - Verifica que el usuario es el propietario del repositorio.
-        - Elimina el repositorio si la verificación es exitosa.
-        - Retorna la respuesta de eliminación.
+    Logic:
+        - Verifies that the user is the owner of the repository.
+        - Deletes the repository if verification is successful.
+        - Returns the deletion response.
 
-    📤 Retorna:
-        - Respuesta con resultado de la eliminación.
-        - En caso de error, retorna excepción HTTP con detalle del error.
+    Returns:
+        - Response with the result of the deletion.
+        - In case of error, returns an HTTP exception with error details.
     """
     try:
         # get ID from user
@@ -179,4 +179,3 @@ async def delete_repository_endpoint(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
-    

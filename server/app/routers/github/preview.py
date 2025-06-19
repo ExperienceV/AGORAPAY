@@ -1,31 +1,31 @@
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
-from app.services.github_service import search_repo_tree, fetch_file_from_repo
+from app.services.github_service import get_repository_tree, fetch_file_from_repository
 from app.database.queries.user import get_token_by_user
 
-app = APIRouter(tags=["views"])
+router = APIRouter(tags=["views"])
 
 
-@app.get("/tree")
+@router.get("/tree")
 async def get_repo_tree(repository: str = None, username: str = None, branch: str = "main"):
     """
-    🔍 Obtiene el árbol de archivos de un repositorio público o privado de GitHub.
+    🔍 Retrieves the file tree of a public or private GitHub repository.
 
-    📥 Parámetros:
-        - repository (str): Nombre del repositorio.
-        - username (str): Nombre del propietario del repositorio.
-        - branch (str): Rama del repositorio a consultar (por defecto "main").
+    Parameters:
+        - repository (str): Repository name.
+        - username (str): Repository owner's username.
+        - branch (str): Branch to query (default "main").
 
-    🧠 Lógica:
-        - Busca el token del usuario en la base de datos.
-        - Utiliza la API de GitHub para obtener el árbol del repositorio.
+    Logic:
+        - Looks up the user's token in the database.
+        - Uses the GitHub API to get the repository tree.
 
-    📤 Retorna:
-        - Un diccionario con la estructura de archivos del repositorio especificado.
+    Returns:
+        - A dictionary with the file structure of the specified repository.
     """
     github_token = get_token_by_user(username=username)
 
-    repo_tree = search_repo_tree(
+    repo_tree = get_repository_tree(
         owner=username,
         repo=repository,
         branch=branch,
@@ -35,28 +35,28 @@ async def get_repo_tree(repository: str = None, username: str = None, branch: st
     return repo_tree
 
 
-@app.get("/file")
+@router.get("/file")
 async def get_file(
-    path: str = Query(..., description="Ruta del archivo"),
+    path: str = Query(..., description="File path"),
     owner: str = "ExperienceV",
     repo: str = "ChatBot-OpenAI"
 ):
     """
-    📄 Obtiene el contenido de un archivo específico dentro de un repositorio.
+    📄 Retrieves the content of a specific file within a repository.
 
-    📥 Parámetros:
-        - path (str): Ruta del archivo dentro del repositorio (requerido).
-        - owner (str): Propietario del repositorio (por defecto "ExperienceV").
-        - repo (str): Nombre del repositorio (por defecto "ChatBot-OpenAI").
+    Parameters:
+        - path (str): File path within the repository (required).
+        - owner (str): Repository owner (default "ExperienceV").
+        - repo (str): Repository name (default "ChatBot-OpenAI").
 
-    🧠 Lógica:
-        - Busca el token de GitHub del propietario.
-        - Consulta a GitHub el contenido del archivo en la ruta especificada.
+    Logic:
+        - Looks up the owner's GitHub token.
+        - Queries GitHub for the file content at the specified path.
 
-    📤 Retorna:
-        - Un objeto JSON con el contenido del archivo (puede estar codificado en base64 si es binario).
+    Returns:
+        - A JSON object with the file content (may be base64 encoded if binary).
     """
     token = get_token_by_user(username=owner)
-    result = await fetch_file_from_repo(owner, repo, path, token)
+    result = await fetch_file_from_repository(owner, repo, path, token)
     print(result)
     return JSONResponse(content=result)

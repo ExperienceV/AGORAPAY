@@ -7,14 +7,14 @@ from fastapi.security import HTTPBearer
 from icecream import ic
 from app.config import settings
 
-# Esquema de autenticación Bearer
+# Authentication security scheme
 security = HTTPBearer()
 
 def create_access_token(data: dict):
     """
-    Crea un token JWT de acceso.
-    - data: Datos a incluir en el token (por ejemplo, el nombre de usuario).
-    - exp: Tiempo de expiración del token (15 minutos por defecto).
+    Create an access token JWT.
+    - data: Data to include in the token (e.g., user name).
+    - exp: Expiration time of the token (15 minutes by default).
     """
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_MAX_AGE)
@@ -23,9 +23,9 @@ def create_access_token(data: dict):
 
 def create_refresh_token(data: dict):
     """
-    Crea un token JWT de refresco.
-    - data: Datos a incluir en el token.
-    - exp: Tiempo de expiración del token (7 días por defecto).
+    Create a refresh token JWT.
+    - data: Data to include in the token (e.g., user name).
+    - exp: Expiration time of the token (15 days by default).   
     """
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_MAX_AGE)
@@ -34,10 +34,10 @@ def create_refresh_token(data: dict):
 
 def verify_token(token: str):
     """
-    Verifica la validez de un token JWT.
-    - token: Token JWT a verificar.
-    - Retorna el payload del token si es válido.
-    - Lanza una excepción HTTP 401 si el token es inválido o ha expirado.
+    verify_token: Verify a token JWT.
+    - token: Token to verify.
+    - If token is valid: Return a payload decode.
+    - If token is invalid: Raise a exception.       
     """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
@@ -46,7 +46,7 @@ def verify_token(token: str):
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o expirado",
+            detail="Invalid token, please login again.",
         )
 
 def get_current_user(
@@ -59,16 +59,16 @@ def get_current_user(
     try:
         ic("Token check started")
 
-        # 1. Primero verifica si no hay tokens
+        # 1. first check if tokens are provided
         if not access_token and not refresh_token:
             ic("No tokens provided")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="No estás autorizado, inicia sesión."
+                detail="Unathorize, login."
             )
 
 
-        # 2. Luego maneja los casos específicos de JWT
+        # 2. Next, check if access token is provided
         try:
             if not access_token:
                 ic("Access token missing, using refresh token")
@@ -88,21 +88,21 @@ def get_current_user(
             ic("Token expired error")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token expirado"
+                detail="Expired token, please login again."
             )
         except JWTError:
             ic("Invalid token error")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Token inválido"
+                detail="Invalid token, please login again."
             )
 
     except HTTPException:
-        # Re-lanzar las HTTPException que ya hemos definido
+        # Re-raise the HTTPException to be handled by FastAPI
         raise
     except Exception as e:
         ic("Unexpected error", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error interno del servidor"
+            detail="Server error, please try again later."
         )

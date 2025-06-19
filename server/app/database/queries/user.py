@@ -4,11 +4,11 @@ from app.database.models.user import User
 from app.utils.security.crypt_token import encrypt_token, decrypt_token
 from typing import Optional
 from icecream import ic
-ic("-- Iniciando el módulo de consultas de usuario --")
+ic("-- Starting user queries module --")
 Base.metadata.create_all(bind=engine)
 
 # Dependency to get the database session
-ic("Definiendo la función get_db para obtener la sesión de la base de datos")
+ic("Defining get_db function to obtain the database session")
 def get_db():
     db = SessionLocal()
     try:
@@ -17,51 +17,46 @@ def get_db():
         db.close()
 
 # Function to add or update a user in the database
-ic("Definiendo la función add_user para agregar o actualizar un usuario")
+ic("Defining add_user function to add or update a user")
 def add_user(name: str, email: str, token: str):
     db = get_db()
     try:
-        ic("Iniciando la transacción para agregar o actualizar el usuario")
+        ic("Starting transaction to add or update user")
         # Encrypt the token before storing it
-        ic("Encriptando el token del usuario")
+        ic("Encrypting user's token")
         encrypted = encrypt_token(token)
-        
         # search for the user by email
-        ic("Buscando el usuario por correo electrónico:", email)
+        ic("Searching for user by email:", email)
         user = db.query(User).filter(User.email == email).first()
-
-        ic("Actualizando o creando el usuario")
+        ic("Updating or creating user")
         if user:
-            ic("Usuario encontrado, actualizando el token")
-            # If the user exists, update the token
+            ic("User found, updating token")
             user.github_token_encrypted = encrypted
             db.commit()
             db.refresh(user)
-            ic("Token del usuario actualizado correctamente")
+            ic("User token updated successfully")
             return {"message": "User token updated", "id": user.id}
         else:
-            # if the user does not exist, create a new user
-            ic("Usuario no encontrado, creando un nuevo usuario")
+            ic("User not found, creating new user")
             new_user = User(username=name, email=email, github_token_encrypted=encrypted)
             db.add(new_user)
             db.commit()
             db.refresh(new_user)
-            ic("Nuevo usuario creado correctamente")
+            ic("New user created successfully")
             return {"message": "User created", "id": new_user.id}
     finally:
-        ic("Cerrando la sesión de la base de datos")
+        ic("Closing database session")
         db.close()
 
-
 # Function to get user data by username, email, or user_id
-ic("Definiendo la función get_user_data para obtener datos del usuario")
+ic("Defining get_user_data function to get user data")
 def get_user_data(
         db: Session = SessionLocal(), 
         username: Optional[str] = None, 
         email: Optional[str] = None,
         user_id: Optional[int] = None
         ) -> Optional[str]:
-    ic("Iniciando la consulta para obtener datos del usuario")
+    ic("Starting query to get user data")
     if username:
         user = db.query(User).filter(User.username == username).first()
     elif email:
@@ -70,30 +65,27 @@ def get_user_data(
         user = db.query(User).filter(User.id == user_id).first()
     else:
         return None
-
-    ic("Datos del usuario obtenidos:", user)
+    ic("User data obtained:", user)
     if user:
         data = {
             "id": user.id,
             "username": user.username,
             "email": user.email
         }
-        ic("Datos del usuario:", data)
+        ic("User data:", data)
         return data
-    ic("No se encontró el usuario")
+    ic("User not found")
     return None
 
-
 # Function to get the GitHub token by username, email, or user_id
-ic("Definiendo la función get_token_by_user para obtener el token de GitHub del usuario")
+ic("Defining get_token_by_user function to get user's GitHub token")
 def get_token_by_user(
         db: Session = SessionLocal(), 
         username: Optional[str] = None, 
         email: Optional[str] = None,
         user_id: Optional[int] = None
         ) -> Optional[str]:
-    ic("Iniciando la consulta para obtener el token de GitHub del usuario")
-    # Check if any identifier is provided
+    ic("Starting query to get user's GitHub token")
     if username:
         user = db.query(User).filter(User.username == username).first()
     elif email:
@@ -101,22 +93,20 @@ def get_token_by_user(
     elif user_id:
         user = db.query(User).filter(User.id == user_id).first()
     else:
-        ic("No se proporcionó ningún identificador de usuario")
+        ic("No user identifier provided")
         return None
-
     if user and user.github_token_encrypted:
-        ic("Token de GitHub encontrado, desencriptando")
+        ic("GitHub token found, decrypting")
         return decrypt_token(user.github_token_encrypted)
-    ic("No se encontró el token de GitHub del usuario")
+    ic("User's GitHub token not found")
     return None
 
-
 # Function to get the user ID by username
-ic("Definiendo la función get_id_with_username para obtener el ID del usuario por nombre de usuario")
+ic("Defining get_id_with_username function to get user ID by username")
 def get_id_with_username(username: str) -> int | None:
     db = get_db()
-    ic("Iniciando la consulta para obtener el ID del usuario por nombre de usuario:", username)
-    usuario = db.query(User).filter_by(username=username).first()
-    ic("Usuario encontrado:", usuario)
-    return usuario.id if usuario else None
+    ic("Starting query to get user ID by username:", username)
+    user = db.query(User).filter_by(username=username).first()
+    ic("User found:", user)
+    return user.id if user else None
 

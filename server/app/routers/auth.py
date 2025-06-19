@@ -5,17 +5,17 @@ from app.utils.security.modules import auth_dependency
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.get("/verify_user")
-async def test(user = Depends(auth_dependency)):
+async def verify_user(user=Depends(auth_dependency)):
     """
-    ✅ Verifica que el usuario esté autenticado correctamente.
+    ✅ Verifies that the user is properly authenticated.
 
-    📥 Parámetros:
-        - user (dict): Usuario autenticado extraído del token JWT.
+    Parameters:
+        - user (dict): Authenticated user extracted from the JWT token.
 
-    🧠 Lógica:
-        - Usa la dependencia de autenticación para validar al usuario.
+    Logic:
+        - Uses the authentication dependency to validate the user.
 
-    📤 Retorna:
-        - Mensaje de confirmación "autenticado" con código HTTP 200 si la autenticación es exitosa.
+    Returns:
+        - Confirmation message "authenticated" with HTTP 200 code if authentication is successful.
     """
-    return JSONResponse(content="autenticado", status_code=200)
+    return JSONResponse(content="authenticated", status_code=200)

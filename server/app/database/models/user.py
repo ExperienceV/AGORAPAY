@@ -3,10 +3,10 @@ from sqlalchemy.orm import relationship
 from app.database.config import Base
 from icecream import ic
 
-ic("Iniciando el módulo de modelos de usuario y repositorio")
+ic("Starting user and repository models module")
 # Table to represent the many-to-many relationship between users and purchased repositories
 
-ic("Definiendo la tabla de relación muchos a muchos entre usuarios y repositorios comprados")
+ic("Defining many-to-many relationship table between users and purchased repositories")
 user_purchased_repositories = Table(
     "user_purchased_repositories",
     Base.metadata,
@@ -15,7 +15,7 @@ user_purchased_repositories = Table(
 )
 
 # Represents a repository in the database
-ic("Definiendo el modelo Repository para representar un repositorio en la base de datos")
+ic("Defining Repository model to represent a repository in the database")
 class Repository(Base):
     __tablename__ = "repositories"    
     id = Column(Integer, primary_key=True, index=True)
@@ -25,11 +25,11 @@ class Repository(Base):
     price = Column(Float)
     uploader_id = Column(Integer, ForeignKey("users.id"))
 
-    # Metadatos del vendedor
+    # Seller metadata
     seller_id = Column(Integer, nullable=True)
     seller_repo_id = Column(Integer, nullable=True)
 
-    # Nuevo campo: si es un repo comprado
+    # New field: if it's a transferred repo
     is_transfer = Column(Boolean, default=False)
 
     uploader = relationship("User", back_populates="uploaded_repositories")
@@ -37,7 +37,7 @@ class Repository(Base):
 
 
 # Represents a user in the database
-ic("Definiendo el modelo User para representar un usuario en la base de datos")
+ic("Defining User model to represent a user in the database")
 class User(Base):
     __tablename__ = "users"
 
@@ -46,10 +46,10 @@ class User(Base):
     email = Column(String, index=True)
     github_token_encrypted = Column(String)
 
-    # Uno a muchos (repos subidos por el usuario)
+    # One to many (repos uploaded by the user)
     uploaded_repositories = relationship("Repository", back_populates="uploader")
 
-    # Muchos a muchos (repos comprados por el usuario)
+    # Many to many (repos purchased by the user)
     purchased_repositories = relationship(
         "Repository",
         secondary=user_purchased_repositories,
